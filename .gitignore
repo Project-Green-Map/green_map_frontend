@@ -2,7 +2,10 @@
 
 !/lib/
 !/lib/*
+!/lib/*/*
 !.gitignore
 !README.md
 !pubspec.yaml
 !*/android/app/src/main/AndroidManifest.xml
+
+/lib/generated_plugin_registrant.dart
