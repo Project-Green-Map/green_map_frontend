@@ -1,5 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'MyApp.dart';
 
-void main() => runApp(const MyApp());
+// uncomment below to test getting and displaying geolocation data
+// import 'home_page.dart';
+// class MyApp extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Flutter Demo',
+//       theme: ThemeData(
+//         primarySwatch: Colors.blue,
+//         visualDensity: VisualDensity.adaptivePlatformDensity,
+//       ),
+//       home: HomePage(),
+//     );
+//   }
+// }
+
+void main() => runApp(MyApp());
