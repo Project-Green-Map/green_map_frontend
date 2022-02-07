@@ -3,8 +3,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart'; //only use for Position objects. add functionality via geolocator_service.dart
+import 'package:map/models/place_search.dart';
+import 'package:map/services/places_service.dart';
 
-import 'dart:math' show cos, sqrt, asin;
+import 'dart:math' show cos, sqrt, asin, min;
 
 import './services/geolocator_service.dart';
 import './services/geocoding_service.dart';
@@ -55,6 +57,9 @@ class _MapViewState extends State<MapView> {
 
   final _geolocatorService = GeolocatorService();
   final _geocodingService = GeocodingService();
+  final _placesService = PlacesService();
+
+  List<PlaceSearch> searchResults = [];
 
   Set<Marker> markers = {};
 
@@ -116,11 +121,16 @@ class _MapViewState extends State<MapView> {
     // called as soon as the p launches
     super.initState();
     // print("initState() called");
-    updateCurrentLocation();
+  }
+
+  void startupLogic() async {
+    //called when the map is finished loading
+    await updateCurrentLocation();
+    moveCameraToCurrentLocation();
   }
 
   //in an effort to save API requests, only call when necessary
-  void updateCurrentLocation() async {
+  updateCurrentLocation() async {
     await _geolocatorService.getCurrentLocation().then((position) async {
       setState(() {
         _currentPosition = position;
@@ -327,6 +337,10 @@ class _MapViewState extends State<MapView> {
     return 12742 * asin(sqrt(a));
   }
 
+  searchPlaces(String searchTerm) async {
+    searchResults = await _placesService.getAutocomplete(searchTerm);
+  }
+
   @override
   Widget build(BuildContext context) {
     var height = MediaQuery.of(context).size.height;
@@ -342,70 +356,123 @@ class _MapViewState extends State<MapView> {
             // It's not working on my emulator.
             onMapCreated: (GoogleMapController controller) {
               mapController = controller;
-              //updateCurrentLocation(); // this seems to work better in the on-app-initialisation, but it was working here for me on occasion
-              moveCameraToCurrentLocation(); // I've moved this down here so the map always loads before trying to move the camera
+              startupLogic(); // This logic ensures the map always loads before trying to move the camera, which itself has a currentPosition
             },
             polylines: Set<Polyline>.of(polylines.values),
           ),
+
+          //suggestions box background:
+          if (searchResults != null &&
+              (startAddressController.text != '' ||
+                  destinationAddressController.text != '') &&
+              searchResults.length > 0)
+            Container(
+              height: height / 1.3,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                backgroundBlendMode: BlendMode.darken,
+              ),
+            ),
+
+          //search bars:
           SafeArea(
               child: Align(
             alignment: Alignment.topCenter,
             child: Padding(
               padding: const EdgeInsets.only(top: 10.0),
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white70,
-                  borderRadius: BorderRadius.all(
-                    Radius.circular(20.0),
-                  ),
-                ),
-                width: width * 0.9,
-                child: Padding(
-                    padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-                    child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const Text(
-                            'Places',
-                            style: TextStyle(fontSize: 20.0),
-                          ),
-                          const SizedBox(height: 10),
-                          _textField(
-                              label: 'Start',
-                              hint: 'Choose starting point',
-                              prefixIcon: const Icon(Icons.looks_one),
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.my_location),
-                                onPressed: () {
-                                  startAddressController.text = _currentAddress;
-                                  _startAddress = _currentAddress;
-                                },
+              child: Column(
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white70,
+                      borderRadius: BorderRadius.all(
+                        Radius.circular(20.0),
+                      ),
+                    ),
+                    width: width * 0.9,
+                    child: Padding(
+                        padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                        child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              const Text(
+                                'Places', //TODO: im not convinced by this, it uses up a lot of real estate
+                                style: TextStyle(fontSize: 20.0),
                               ),
-                              controller: startAddressController,
-                              focusNode: startAddressFocusNode,
-                              width: width,
-                              locationCallback: (String value) {
-                                setState(() {
-                                  _startAddress = value;
-                                });
-                              }),
-                          const SizedBox(height: 10),
-                          _textField(
-                              label: 'Destination',
-                              hint: 'Choose destination',
-                              prefixIcon: Icon(Icons.looks_two),
-                              controller: destinationAddressController,
-                              focusNode: destinationAddressFocusNode,
-                              width: width,
-                              locationCallback: (String value) {
-                                setState(() {
-                                  _destinationAddress = value;
-                                });
-                              }),
-                        ])),
+                              const SizedBox(height: 10),
+                              _textField(
+                                  label: 'Start',
+                                  hint: 'Choose starting point',
+                                  prefixIcon: const Icon(Icons.looks_one),
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.my_location),
+                                    onPressed: () {
+                                      startAddressController.text =
+                                          _currentAddress;
+                                      _startAddress = _currentAddress;
+                                    },
+                                  ),
+                                  controller: startAddressController,
+                                  focusNode: startAddressFocusNode,
+                                  width: width,
+                                  locationCallback: (String value) {
+                                    //TODO: should probably call locationCallback something else, it does more than just deal with location
+                                    setState(() {
+                                      _startAddress = value;
+                                      //should we be doing the above every time the user presses a new key?
+                                      searchPlaces(value);
+                                    });
+                                  }),
+                              const SizedBox(height: 10),
+                              _textField(
+                                  label: 'Destination',
+                                  hint: 'Choose destination',
+                                  prefixIcon: Icon(Icons.looks_two),
+                                  controller: destinationAddressController,
+                                  focusNode: destinationAddressFocusNode,
+                                  width: width,
+                                  locationCallback: (String value) {
+                                    setState(() {
+                                      _destinationAddress = value;
+                                      searchPlaces(value);
+                                    });
+                                  }),
+                            ])),
+                  ),
+
+                  SizedBox(
+                      height:
+                          10), //adds spacing between the search bars and results
+
+                  //suggestions list:
+                  if (searchResults != null &&
+                      (startAddressController.text != '' ||
+                          destinationAddressController.text != '') &&
+                      searchResults.length > 0)
+                    ListView.builder(
+                      shrinkWrap: true,
+                      itemBuilder: ((context, index) {
+                        return Card(
+                            elevation: 3,
+                            margin: EdgeInsets.symmetric(
+                                vertical: 2, horizontal: 10),
+                            color: Colors.black.withOpacity(0.7),
+                            child: ListTile(
+                              title: Text(searchResults[index].description,
+                                  style: TextStyle(color: Colors.white)),
+                            ));
+                      }),
+                      itemCount: min(3, searchResults.length),
+                      //TODO: do we need more than 3?
+                    ),
+                ],
               ),
             ),
           )),
+
+          //centre button
+          //TODO: centre (UK) or center (US)? (or shall we just use an icon :P)
+
           SafeArea(
               child: Align(
                   alignment: FractionalOffset.bottomCenter,
