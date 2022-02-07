@@ -4,6 +4,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart'; //only use for Position objects. add functionality via geolocator_service.dart
 import 'package:map/models/place_search.dart';
+import 'package:map/secrets.dart';
 import 'package:map/services/places_service.dart';
 
 import 'dart:math' show cos, sqrt, asin, min;
@@ -176,7 +177,7 @@ class _MapViewState extends State<MapView> {
   ) async {
     polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      'AIzaSyCJ4vZceHbTKsYhCaZuy58pQ7WrKhlk9Yo',
+      Secrets.API_KEY,
       PointLatLng(startLatitude, startLongitude),
       PointLatLng(destinationLatitude, destinationLongitude),
       travelMode: TravelMode.transit,
@@ -361,7 +362,7 @@ class _MapViewState extends State<MapView> {
             polylines: Set<Polyline>.of(polylines.values),
           ),
 
-          //suggestions box background:
+          //suggestions box background (only show if there is a search):
           if (searchResults != null &&
               (startAddressController.text != '' ||
                   destinationAddressController.text != '') &&
@@ -374,12 +375,13 @@ class _MapViewState extends State<MapView> {
               ),
             ),
 
-          //search bars:
+          //search area
           SafeArea(
               child: Align(
             alignment: Alignment.topCenter,
             child: Padding(
               padding: const EdgeInsets.only(top: 10.0),
+              //column below is for (1) container for search bars and (2) container for prediction results
               child: Column(
                 children: [
                   Container(
@@ -392,11 +394,12 @@ class _MapViewState extends State<MapView> {
                     width: width * 0.9,
                     child: Padding(
                         padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                        //column below is for the two search bars
                         child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
                               const Text(
-                                'Places', //TODO: im not convinced by this, it uses up a lot of real estate
+                                'Places', //TODO: im not convinced we need this, it uses up a lot of real estate
                                 style: TextStyle(fontSize: 20.0),
                               ),
                               const SizedBox(height: 10),
@@ -419,7 +422,7 @@ class _MapViewState extends State<MapView> {
                                     //TODO: should probably call locationCallback something else, it does more than just deal with location
                                     setState(() {
                                       _startAddress = value;
-                                      //should we be doing the above every time the user presses a new key?
+                                      //TODO: should we be doing the above every time the user presses a new key?
                                       searchPlaces(value);
                                     });
                                   }),
@@ -440,11 +443,10 @@ class _MapViewState extends State<MapView> {
                             ])),
                   ),
 
-                  SizedBox(
-                      height:
-                          10), //adds spacing between the search bars and results
+                  //adds spacing between the search bars and results
+                  SizedBox(height: 10),
 
-                  //suggestions list:
+                  //suggestions list (only show if there is a search):
                   if (searchResults != null &&
                       (startAddressController.text != '' ||
                           destinationAddressController.text != '') &&
@@ -471,8 +473,6 @@ class _MapViewState extends State<MapView> {
           )),
 
           //centre button
-          //TODO: centre (UK) or center (US)? (or shall we just use an icon :P)
-
           SafeArea(
               child: Align(
                   alignment: FractionalOffset.bottomCenter,
@@ -489,10 +489,13 @@ class _MapViewState extends State<MapView> {
                             zoom: 12.0,
                           )));
                         },
-                        child: const Text('Center'),
+                        child: const Text(
+                            'Center'), //TODO: centre (UK) or center (US)? (or shall we just use an icon :P)
                       ))))
         ],
       ),
     );
   }
 }
+
+//TODO: check how much money the Places API is getting through ;)

@@ -1,5 +1,6 @@
 import 'package:geocoding/geocoding.dart';
 
+//this class should deal with all direct communication with the GeoCoding API
 class GeocodingService {
   Future<Placemark?> getCurrentPlacemark(position) async {
     try {

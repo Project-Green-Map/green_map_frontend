@@ -4,6 +4,8 @@ import 'dart:convert' as convert; // package for converting between file types
 import 'package:map/models/place_search.dart';
 import 'package:map/secrets.dart';
 
+//this class should deal with all direct communication with the Places API
+
 class PlacesService {
   final key = Secrets.API_KEY;
   Future<List<PlaceSearch>> getAutocomplete(String search) async {
