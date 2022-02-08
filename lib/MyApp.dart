@@ -76,14 +76,12 @@ class _MapViewState extends State<MapView> {
     required double width,
     required Icon prefixIcon,
     Widget? suffixIcon,
-    required Function(String) locationCallback,
+    required Function(String) onChanged,
   }) {
     return SizedBox(
       width: width * 0.8,
       child: TextField(
-        onChanged: (value) {
-          locationCallback(value);
-        },
+        onChanged: onChanged,
         controller: controller,
         focusNode: focusNode,
         decoration: InputDecoration(
@@ -418,11 +416,11 @@ class _MapViewState extends State<MapView> {
                                   controller: startAddressController,
                                   focusNode: startAddressFocusNode,
                                   width: width,
-                                  locationCallback: (String value) {
-                                    //TODO: should probably call locationCallback something else, it does more than just deal with location
+                                  onChanged: (String value) {
+                                    //// DONE: should probably call locationCallback something else, it does more than just deal with location
                                     setState(() {
                                       _startAddress = value;
-                                      //TODO: should we be doing the above every time the user presses a new key?
+                                      ////DONE: should we be doing the above every time the user presses a new key?
                                       searchPlaces(value);
                                     });
                                   }),
@@ -434,7 +432,7 @@ class _MapViewState extends State<MapView> {
                                   controller: destinationAddressController,
                                   focusNode: destinationAddressFocusNode,
                                   width: width,
-                                  locationCallback: (String value) {
+                                  onChanged: (String value) {
                                     setState(() {
                                       _destinationAddress = value;
                                       searchPlaces(value);
