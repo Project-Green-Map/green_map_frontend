@@ -1,9 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.google_map_api">
+    package="com.green_map.green_map">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
-        android:label="google_map_api"
+        android:label="green_map"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
        <meta-data

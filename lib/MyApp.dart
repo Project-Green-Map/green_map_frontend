@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:geolocator/geolocator.dart'; //only use for Position objects. add functionality via geolocator_service.dart
+import 'package:map/models/place_search.dart';
+import 'package:map/secrets.dart';
+import 'package:map/services/places_service.dart';
 
-import 'dart:math' show cos, sqrt, asin;
+import 'dart:math' show cos, sqrt, asin, min;
+
+import './services/geolocator_service.dart';
+import './services/geocoding_service.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -50,6 +56,12 @@ class _MapViewState extends State<MapView> {
   final startAddressFocusNode = FocusNode();
   final destinationAddressFocusNode = FocusNode();
 
+  final _geolocatorService = GeolocatorService();
+  final _geocodingService = GeocodingService();
+  final _placesService = PlacesService();
+
+  List<PlaceSearch> searchResults = [];
+
   Set<Marker> markers = {};
 
   late PolylinePoints polylinePoints;
@@ -64,14 +76,12 @@ class _MapViewState extends State<MapView> {
     required double width,
     required Icon prefixIcon,
     Widget? suffixIcon,
-    required Function(String) locationCallback,
+    required Function(String) onChanged,
   }) {
     return SizedBox(
       width: width * 0.8,
       child: TextField(
-        onChanged: (value) {
-          locationCallback(value);
-        },
+        onChanged: onChanged,
         controller: controller,
         focusNode: focusNode,
         decoration: InputDecoration(
@@ -105,65 +115,67 @@ class _MapViewState extends State<MapView> {
     );
   }
 
-  // Method for retrieving the current location
-  _getCurrentLocation() async {
-    await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
-        .then((Position position) async {
-      setState(() {
-        _currentPosition = position;
-        print('CURRENT POS: $_currentPosition');
-        mapController.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: LatLng(position.latitude, position.longitude),
-              zoom: 18.0,
-            ),
-          ),
-        );
-      });
-      await _getAddress();
-    }).catchError((e) {
-      print(e);
-    });
-  }
-
-  // Method for retrieving the address
-  _getAddress() async {
-    try {
-      List<Placemark> p = await placemarkFromCoordinates(
-          _currentPosition.latitude, _currentPosition.longitude);
-
-      Placemark place = p[0];
-
-      setState(() {
-        _currentAddress =
-        "${place.name}, ${place.locality}, ${place.postalCode}, ${place
-            .country}";
-        print("Current address: $_currentAddress");
-        startAddressController.text = _currentAddress;
-        _startAddress = _currentAddress;
-      });
-    } catch (e) {
-      print(e);
-    }
-  }
-
   @override
   void initState() {
     // called as soon as the p launches
     super.initState();
     // print("initState() called");
-    _getCurrentLocation();
+  }
+
+  void startupLogic() async {
+    //called when the map is finished loading
+    await updateCurrentLocation();
+    moveCameraToCurrentLocation();
+  }
+
+  //in an effort to save API requests, only call when necessary
+  updateCurrentLocation() async {
+    await _geolocatorService.getCurrentLocation().then((position) async {
+      setState(() {
+        _currentPosition = position;
+        print('CURRENT POS: $_currentPosition');
+      });
+      await _updateCurrentAddress();
+    });
+  }
+
+  //do not call. use the above function
+  _updateCurrentAddress() async {
+    await _geocodingService.getCurrentPlacemark(_currentPosition).then((place) {
+      setState(() {
+        if (place != null) {
+          _currentAddress =
+              "${place.name}, ${place.locality}, ${place.postalCode}, ${place.country}";
+          //TODO: This doesn't work for street names, e.g. "17, , CB2 3NE, UK". Could we see which ones are non-null and use those?
+          print("Current address: $_currentAddress");
+          startAddressController.text = _currentAddress;
+          _startAddress = _currentAddress;
+        }
+      });
+    });
+  }
+
+  void moveCameraToCurrentLocation() async {
+    mapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(_currentPosition.latitude, _currentPosition.longitude),
+          zoom: 18.0,
+        ),
+      ),
+    );
   }
 
   // Create the polylines for showing the route between two places
-  _createPolylines(double startLatitude,
-      double startLongitude,
-      double destinationLatitude,
-      double destinationLongitude,) async {
+  _createPolylines(
+    double startLatitude,
+    double startLongitude,
+    double destinationLatitude,
+    double destinationLongitude,
+  ) async {
     polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      'AIzaSyCJ4vZceHbTKsYhCaZuy58pQ7WrKhlk9Yo',
+      Secrets.API_KEY,
       PointLatLng(startLatitude, startLongitude),
       PointLatLng(destinationLatitude, destinationLongitude),
       travelMode: TravelMode.transit,
@@ -191,7 +203,7 @@ class _MapViewState extends State<MapView> {
       // Retrieving placemarks from addresses
       List<Location>? startPlacemark = await locationFromAddress(_startAddress);
       List<Location>? destinationPlacemark =
-      await locationFromAddress(_destinationAddress);
+          await locationFromAddress(_destinationAddress);
 
       // Use the retrieved coordinates of the current position,
       // instead of the address if the start position is user's
@@ -324,16 +336,14 @@ class _MapViewState extends State<MapView> {
     return 12742 * asin(sqrt(a));
   }
 
+  searchPlaces(String searchTerm) async {
+    searchResults = await _placesService.getAutocomplete(searchTerm);
+  }
+
   @override
   Widget build(BuildContext context) {
-    var height = MediaQuery
-        .of(context)
-        .size
-        .height;
-    var width = MediaQuery
-        .of(context)
-        .size
-        .width;
+    var height = MediaQuery.of(context).size.height;
+    var width = MediaQuery.of(context).size.width;
     return Scaffold(
       body: Stack(
         children: <Widget>[
@@ -345,15 +355,34 @@ class _MapViewState extends State<MapView> {
             // It's not working on my emulator.
             onMapCreated: (GoogleMapController controller) {
               mapController = controller;
+              startupLogic(); // This logic ensures the map always loads before trying to move the camera, which itself has a currentPosition
             },
             polylines: Set<Polyline>.of(polylines.values),
           ),
+
+          //suggestions box background (only show if there is a search):
+          if (searchResults != null &&
+              (startAddressController.text != '' ||
+                  destinationAddressController.text != '') &&
+              searchResults.length > 0)
+            Container(
+              height: height / 1.3,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                backgroundBlendMode: BlendMode.darken,
+              ),
+            ),
+
+          //search area
           SafeArea(
               child: Align(
-                alignment: Alignment.topCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10.0),
-                  child: Container(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10.0),
+              //column below is for (1) container for search bars and (2) container for prediction results
+              child: Column(
+                children: [
+                  Container(
                     decoration: const BoxDecoration(
                       color: Colors.white70,
                       borderRadius: BorderRadius.all(
@@ -363,11 +392,12 @@ class _MapViewState extends State<MapView> {
                     width: width * 0.9,
                     child: Padding(
                         padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                        //column below is for the two search bars
                         child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
                               const Text(
-                                'Places',
+                                'Places', //TODO: im not convinced we need this, it uses up a lot of real estate
                                 style: TextStyle(fontSize: 20.0),
                               ),
                               const SizedBox(height: 10),
@@ -386,12 +416,14 @@ class _MapViewState extends State<MapView> {
                                   controller: startAddressController,
                                   focusNode: startAddressFocusNode,
                                   width: width,
-                                  locationCallback: (String value) {
+                                  onChanged: (String value) {
+                                    //// DONE: should probably call locationCallback something else, it does more than just deal with location
                                     setState(() {
                                       _startAddress = value;
+                                      ////DONE: should we be doing the above every time the user presses a new key?
+                                      searchPlaces(value);
                                     });
-                                  }
-                              ),
+                                  }),
                               const SizedBox(height: 10),
                               _textField(
                                   label: 'Destination',
@@ -400,19 +432,45 @@ class _MapViewState extends State<MapView> {
                                   controller: destinationAddressController,
                                   focusNode: destinationAddressFocusNode,
                                   width: width,
-                                  locationCallback: (String value) {
+                                  onChanged: (String value) {
                                     setState(() {
                                       _destinationAddress = value;
+                                      searchPlaces(value);
                                     });
-                                  }
-                              ),
-                            ]
-                        )
-                    ),
+                                  }),
+                            ])),
                   ),
-                ),
-              )
-          ),
+
+                  //adds spacing between the search bars and results
+                  SizedBox(height: 10),
+
+                  //suggestions list (only show if there is a search):
+                  if (searchResults != null &&
+                      (startAddressController.text != '' ||
+                          destinationAddressController.text != '') &&
+                      searchResults.length > 0)
+                    ListView.builder(
+                      shrinkWrap: true,
+                      itemBuilder: ((context, index) {
+                        return Card(
+                            elevation: 3,
+                            margin: EdgeInsets.symmetric(
+                                vertical: 2, horizontal: 10),
+                            color: Colors.black.withOpacity(0.7),
+                            child: ListTile(
+                              title: Text(searchResults[index].description,
+                                  style: TextStyle(color: Colors.white)),
+                            ));
+                      }),
+                      itemCount: min(3, searchResults.length),
+                      //TODO: do we need more than 3?
+                    ),
+                ],
+              ),
+            ),
+          )),
+
+          //centre button
           SafeArea(
               child: Align(
                   alignment: FractionalOffset.bottomCenter,
@@ -421,24 +479,21 @@ class _MapViewState extends State<MapView> {
                       child: FloatingActionButton(
                         onPressed: () {
                           mapController.animateCamera(
-                              CameraUpdate.newCameraPosition(
-                                  CameraPosition(
-                                    target: LatLng(
-                                      _currentPosition.latitude,
-                                      _currentPosition.longitude,
-                                    ),
-                                    zoom: 12.0,
-                                  )
-                              )
-                          );
+                              CameraUpdate.newCameraPosition(CameraPosition(
+                            target: LatLng(
+                              _currentPosition.latitude,
+                              _currentPosition.longitude,
+                            ),
+                            zoom: 12.0,
+                          )));
                         },
-                        child: const Text('Center'),
-                      )
-                  )
-              )
-          )
+                        child: const Text(
+                            'Center'), //TODO: centre (UK) or center (US)? (or shall we just use an icon :P)
+                      ))))
         ],
       ),
     );
   }
 }
+
+//TODO: check how much money the Places API is getting through ;)

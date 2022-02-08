@@ -1,0 +1,201 @@
+{
+    "predictions" : [
+       {
+          "description" : "Victoria Station, London, UK",
+          "matched_substrings" : [
+             {
+                "length" : 4,
+                "offset" : 0
+             }
+          ],
+          "place_id" : "ChIJDdMfySEFdkgRVkEX9DXbVvU",
+          "reference" : "ChIJDdMfySEFdkgRVkEX9DXbVvU",
+          "structured_formatting" : {
+             "main_text" : "Victoria Station",
+             "main_text_matched_substrings" : [
+                {
+                   "length" : 4,
+                   "offset" : 0
+                }
+             ],
+             "secondary_text" : "London, UK"
+          },
+          "terms" : [
+             {
+                "offset" : 0,
+                "value" : "Victoria Station"
+             },
+             {
+                "offset" : 18,
+                "value" : "London"
+             },
+             {
+                "offset" : 26,
+                "value" : "UK"
+             }
+          ],
+          "types" : [ "premise", "geocode" ]
+       },
+       {
+          "description" : "Victoria Coach Station, Buckingham Palace Road, London, UK",
+          "matched_substrings" : [
+             {
+                "length" : 4,
+                "offset" : 0
+             }
+          ],
+          "place_id" : "ChIJf5eT6hgFdkgR4yXoAgCElvQ",
+          "reference" : "ChIJf5eT6hgFdkgR4yXoAgCElvQ",
+          "structured_formatting" : {
+             "main_text" : "Victoria Coach Station",
+             "main_text_matched_substrings" : [
+                {
+                   "length" : 4,
+                   "offset" : 0
+                }
+             ],
+             "secondary_text" : "Buckingham Palace Road, London, UK"
+          },
+          "terms" : [
+             {
+                "offset" : 0,
+                "value" : "Victoria Coach Station"
+             },
+             {
+                "offset" : 24,
+                "value" : "Buckingham Palace Road"
+             },
+             {
+                "offset" : 48,
+                "value" : "London"
+             },
+             {
+                "offset" : 56,
+                "value" : "UK"
+             }
+          ],
+          "types" : [ "taxi_stand", "point_of_interest", "establishment" ]
+       },
+       {
+          "description" : "Victoria, BC, Canada",
+          "matched_substrings" : [
+             {
+                "length" : 4,
+                "offset" : 0
+             }
+          ],
+          "place_id" : "ChIJcWGw3Ytzj1QR7Ui7HnTz6Dg",
+          "reference" : "ChIJcWGw3Ytzj1QR7Ui7HnTz6Dg",
+          "structured_formatting" : {
+             "main_text" : "Victoria",
+             "main_text_matched_substrings" : [
+                {
+                   "length" : 4,
+                   "offset" : 0
+                }
+             ],
+             "secondary_text" : "BC, Canada"
+          },
+          "terms" : [
+             {
+                "offset" : 0,
+                "value" : "Victoria"
+             },
+             {
+                "offset" : 10,
+                "value" : "BC"
+             },
+             {
+                "offset" : 14,
+                "value" : "Canada"
+             }
+          ],
+          "types" : [ "locality", "political", "geocode" ]
+       },
+       {
+          "description" : "Victorville, CA, USA",
+          "matched_substrings" : [
+             {
+                "length" : 4,
+                "offset" : 0
+             }
+          ],
+          "place_id" : "ChIJedLdY1pkw4ARdjT0JVkRlQ0",
+          "reference" : "ChIJedLdY1pkw4ARdjT0JVkRlQ0",
+          "structured_formatting" : {
+             "main_text" : "Victorville",
+             "main_text_matched_substrings" : [
+                {
+                   "length" : 4,
+                   "offset" : 0
+                }
+             ],
+             "secondary_text" : "CA, USA"
+          },
+          "terms" : [
+             {
+                "offset" : 0,
+                "value" : "Victorville"
+             },
+             {
+                "offset" : 13,
+                "value" : "CA"
+             },
+             {
+                "offset" : 17,
+                "value" : "USA"
+             }
+          ],
+          "types" : [ "locality", "political", "geocode" ]
+       },
+       {
+          "description" : "Victoria Memorial, Queens Way, Maidan, Calcutta, West Bengal, India",
+          "matched_substrings" : [
+             {
+                "length" : 4,
+                "offset" : 0
+             }
+          ],
+          "place_id" : "ChIJXQGuRhN3AjoRY5fjvORAtQA",
+          "reference" : "ChIJXQGuRhN3AjoRY5fjvORAtQA",
+          "structured_formatting" : {
+             "main_text" : "Victoria Memorial",
+             "main_text_matched_substrings" : [
+                {
+                   "length" : 4,
+                   "offset" : 0
+                }
+             ],
+             "secondary_text" : "Queens Way, Maidan, Calcutta, West Bengal, India"
+          },
+          "terms" : [
+             {
+                "offset" : 0,
+                "value" : "Victoria Memorial"
+             },
+             {
+                "offset" : 19,
+                "value" : "Queens Way"
+             },
+             {
+                "offset" : 31,
+                "value" : "Maidan"
+             },
+             {
+                "offset" : 39,
+                "value" : "Calcutta"
+             },
+             {
+                "offset" : 49,
+                "value" : "West Bengal"
+             },
+             {
+                "offset" : 62,
+                "value" : "India"
+             }
+          ],
+          "types" : [ "tourist_attraction", "museum", "point_of_interest", "establishment" ]
+       }
+    ],
+    "status" : "OK"
+ }
