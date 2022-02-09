@@ -43,6 +43,8 @@ class _MapViewState extends State<MapView> {
   String _startAddress = '';
   String _destinationAddress = '';
 
+  late Position _destinationPosition;
+
   final CameraPosition cambridgePosition = const CameraPosition(
     target: LatLng(52.2053, 0.1218),
     zoom: 12,
@@ -60,11 +62,13 @@ class _MapViewState extends State<MapView> {
 
   List<PlaceSearch> searchResults = [];
 
-  Set<Marker> markers = {};
+  Set<Marker> _markers = {};
 
   late PolylinePoints polylinePoints;
-  Map<PolylineId, Polyline> polylines = {};
+  // Map<PolylineId, Polyline> polylines = {};
   List<LatLng> polylineCoordinates = [];
+  Set<Polyline> _polylines = Set<Polyline>();
+
 
   Widget _textField({
     required TextEditingController controller,
@@ -122,8 +126,22 @@ class _MapViewState extends State<MapView> {
 
   void startupLogic() async {
     //called when the map is finished loading
+    print("startupLogic() called");
     await updateCurrentLocation();
     moveCameraToCurrentLocation();
+    final LatLng destPosition = const LatLng(52.207099555585565, 0.1130482077789624);
+    Marker marker = Marker(
+      markerId: const MarkerId('Trinity College'),
+      position: destPosition,
+      infoWindow: const InfoWindow(
+        title: 'Trinity College',
+        snippet: 'CB2 1TQ, Trinity St, Cambridge',
+      )
+    );
+    setState(() {
+      _markers.add(marker);
+    });
+    await _createPolylines(_currentPosition.latitude, _currentPosition.longitude, destPosition.latitude, destPosition.longitude);
   }
 
   //in an effort to save API requests, only call when necessary
@@ -173,7 +191,7 @@ class _MapViewState extends State<MapView> {
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(_currentPosition.latitude, _currentPosition.longitude),
-          zoom: 18.0,
+          zoom: 14.0,
         ),
       ),
     );
@@ -186,28 +204,42 @@ class _MapViewState extends State<MapView> {
     double destinationLatitude,
     double destinationLongitude,
   ) async {
+    print("_createPolylines() called");
     polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
       Secrets.API_KEY,
       PointLatLng(startLatitude, startLongitude),
       PointLatLng(destinationLatitude, destinationLongitude),
-      travelMode: TravelMode.transit,
+      travelMode: TravelMode.driving,
     );
 
-    if (result.points.isNotEmpty) {
-      result.points.forEach((PointLatLng point) {
+    if (result.status == 'OK'){
+    // if (result.points.isNotEmpty) {
+      for (var point in result.points) {
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-      });
+      }
     }
 
-    PolylineId id = PolylineId('poly');
-    Polyline polyline = Polyline(
-      polylineId: id,
-      color: Colors.red,
-      points: polylineCoordinates,
-      width: 3,
-    );
-    polylines[id] = polyline;
+    setState(() {
+      _polylines.add(
+        Polyline(
+          width:5,
+          polylineId: PolylineId('route_to_trinity'),
+          color: Colors.red,
+          points: polylineCoordinates,
+        )
+      );
+    });
+
+    // PolylineId id = const PolylineId('polyline route');
+    // Polyline polyline = Polyline(
+    //   polylineId: id,
+    //   color: Colors.red,
+    //   points: polylineCoordinates,
+    //   width: 3,
+    // );
+    // polylines[id] = polyline;
+    print("Polylines computed");
   }
 
   searchPlaces(String searchTerm) async {
@@ -225,14 +257,17 @@ class _MapViewState extends State<MapView> {
             mapType: MapType.normal,
             initialCameraPosition: cambridgePosition,
             myLocationEnabled: true,
-            myLocationButtonEnabled: true,
+            myLocationButtonEnabled: false,
             // It's not working on my emulator.
             onMapCreated: (GoogleMapController controller) {
               mapController = controller;
               startupLogic(); // This logic ensures the map always loads before trying to move the camera, which itself has a currentPosition
             },
-            polylines: Set<Polyline>.of(polylines.values),
+            // polylines: Set<Polyline>.of(polylines.values),
+            polylines: _polylines,
+            markers: _markers,
           ),
+
 
           //suggestions box background (only show if there is a search):
           if (searchResults != null &&
