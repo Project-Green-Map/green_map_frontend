@@ -305,10 +305,10 @@ class _MapViewState extends State<MapView> {
                         child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
-                              const Text(
-                                'Places', //TODO: im not convinced we need this, it uses up a lot of real estate
-                                style: TextStyle(fontSize: 20.0),
-                              ),
+                              // const Text(
+                              //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
+                              //   style: TextStyle(fontSize: 20.0),
+                              // ),
                               const SizedBox(height: 10),
                               _textField(
                                   label: 'Start',
@@ -337,7 +337,7 @@ class _MapViewState extends State<MapView> {
                               _textField(
                                   label: 'Destination',
                                   hint: 'Choose destination',
-                                  prefixIcon: Icon(Icons.looks_two),
+                                  prefixIcon: const Icon(Icons.looks_two),
                                   controller: destinationAddressController,
                                   focusNode: destinationAddressFocusNode,
                                   width: width,
