@@ -4,8 +4,10 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart'; //only use for Position objects. add functionality via geolocator_service.dart
 import 'package:map/models/place_search.dart';
-import 'package:map/secrets.dart';
+//import 'package:map/secrets.dart';
 import 'package:map/services/places_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:map/services/routing_service.dart';
 
 import 'dart:math' show cos, sqrt, asin, min;
 
@@ -53,11 +55,14 @@ class _MapViewState extends State<MapView> {
   final startAddressController = TextEditingController();
   final destinationAddressController = TextEditingController();
 
+  var activeAddressController;
+
   final startAddressFocusNode = FocusNode();
   final destinationAddressFocusNode = FocusNode();
 
   final _geolocatorService = GeolocatorService();
   final _geocodingService = GeocodingService();
+  final _routingService = RoutingService();
   final _placesService = PlacesService();
 
   List<PlaceSearch> searchResults = [];
@@ -69,6 +74,22 @@ class _MapViewState extends State<MapView> {
   List<LatLng> polylineCoordinates = [];
   Set<Polyline> _polylines = Set<Polyline>();
 
+  _MapViewState() {
+    startAddressFocusNode.addListener(() {
+      if (startAddressFocusNode.hasFocus) {
+        activeAddressController = startAddressController;
+        searchPlaces(startAddressController.text);
+        print("START ADDRESS CLICKED");
+      }
+    });
+    destinationAddressFocusNode.addListener(() {
+      if (destinationAddressFocusNode.hasFocus) {
+        activeAddressController = destinationAddressController;
+        searchPlaces(destinationAddressController.text);
+        print("DESTINATION ADDRESS CLICKED");
+      }
+    });
+  }
 
   Widget _textField({
     required TextEditingController controller,
@@ -127,21 +148,22 @@ class _MapViewState extends State<MapView> {
   void startupLogic() async {
     //called when the map is finished loading
     print("startupLogic() called");
+
     await updateCurrentLocation();
     moveCameraToCurrentLocation();
     final LatLng destPosition = const LatLng(52.207099555585565, 0.1130482077789624);
     Marker marker = Marker(
-      markerId: const MarkerId('Trinity College'),
-      position: destPosition,
-      infoWindow: const InfoWindow(
-        title: 'Trinity College',
-        snippet: 'CB2 1TQ, Trinity St, Cambridge',
-      )
-    );
+        markerId: const MarkerId('Trinity College'),
+        position: destPosition,
+        infoWindow: const InfoWindow(
+          title: 'Trinity College',
+          snippet: 'CB2 1TQ, Trinity St, Cambridge',
+        ));
     setState(() {
       _markers.add(marker);
     });
-    await _createPolylines(_currentPosition.latitude, _currentPosition.longitude, destPosition.latitude, destPosition.longitude);
+    await _createPolylines(_currentPosition.latitude, _currentPosition.longitude,
+        destPosition.latitude, destPosition.longitude);
   }
 
   //in an effort to save API requests, only call when necessary
@@ -155,25 +177,24 @@ class _MapViewState extends State<MapView> {
     });
   }
 
-  //do not call. use the above function
+  //do not call directly. use the above function
   _updateCurrentAddress() async {
     await _geocodingService.getCurrentPlacemark(_currentPosition).then((place) {
       setState(() {
         if (place != null) {
-          // _currentAddress =
-          //     "${place.name}, ${place.locality}, ${place.postalCode}, ${place.country}";
+          // _currentAddress = "${place.name}, ${place.locality}, ${place.postalCode}, ${place.country}";
           ////Done: This doesn't work for street names, e.g. "17, , CB2 3NE, UK". Could we see which ones are non-null and use those?
 
           bool isFirst = true;
-          List<String?> list = [place.name, place.locality, place.postalCode, place.country];
-          for(int i = 0; i < 4; i ++){
-            if(list.elementAt(i)?.isNotEmpty ?? false){
-              _currentAddress += "${list.elementAt(i)}";
+          List<String?> placeTags = [place.name, place.locality, place.postalCode, place.country];
+          for (int i = 0; i < placeTags.length; i++) {
+            if (placeTags.elementAt(i)?.isNotEmpty ?? false) {
+              _currentAddress += "${placeTags.elementAt(i)}";
             }
-            if(isFirst){
+
+            if (isFirst) {
               isFirst = false;
-            }
-            else{
+            } else {
               _currentAddress += ", ";
             }
           }
@@ -205,30 +226,24 @@ class _MapViewState extends State<MapView> {
     double destinationLongitude,
   ) async {
     print("_createPolylines() called");
-    polylinePoints = PolylinePoints();
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      Secrets.API_KEY,
-      PointLatLng(startLatitude, startLongitude),
-      PointLatLng(destinationLatitude, destinationLongitude),
-      travelMode: TravelMode.driving,
-    );
 
-    if (result.status == 'OK'){
-    // if (result.points.isNotEmpty) {
+    PolylineResult result = await _routingService.getRouteFromCoordinates(
+        startLatitude, startLongitude, destinationLatitude, destinationLongitude);
+
+    if (result.status == 'OK') {
+      // if (result.points.isNotEmpty) {
       for (var point in result.points) {
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
       }
     }
 
     setState(() {
-      _polylines.add(
-        Polyline(
-          width:5,
-          polylineId: PolylineId('route_to_trinity'),
-          color: Colors.red,
-          points: polylineCoordinates,
-        )
-      );
+      _polylines.add(Polyline(
+        width: 5,
+        polylineId: PolylineId('route_to_trinity'),
+        color: Colors.red,
+        points: polylineCoordinates,
+      ));
     });
 
     // PolylineId id = const PolylineId('polyline route');
@@ -243,7 +258,7 @@ class _MapViewState extends State<MapView> {
   }
 
   searchPlaces(String searchTerm) async {
-    searchResults = await _placesService.getAutocomplete(searchTerm);
+    searchResults = (searchTerm.isEmpty) ? [] : await _placesService.getAutocomplete(searchTerm);
   }
 
   @override
@@ -268,12 +283,10 @@ class _MapViewState extends State<MapView> {
             markers: _markers,
           ),
 
-
           //suggestions box background (only show if there is a search):
-          if (searchResults != null &&
-              (startAddressController.text != '' ||
-                  destinationAddressController.text != '') &&
-              searchResults.length > 0)
+          if (activeAddressController != null &&
+              activeAddressController.text != '' &&
+              searchResults.isNotEmpty)
             Container(
               height: height / 1.3,
               decoration: BoxDecoration(
@@ -302,69 +315,64 @@ class _MapViewState extends State<MapView> {
                     child: Padding(
                         padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
                         //column below is for the two search bars
-                        child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              // const Text(
-                              //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
-                              //   style: TextStyle(fontSize: 20.0),
-                              // ),
-                              const SizedBox(height: 10),
-                              _textField(
-                                  label: 'Start',
-                                  hint: 'Choose starting point',
-                                  prefixIcon: const Icon(Icons.looks_one),
-                                  suffixIcon: IconButton(
-                                    icon: const Icon(Icons.my_location),
-                                    onPressed: () {
-                                      startAddressController.text =
-                                          _currentAddress;
-                                      _startAddress = _currentAddress;
-                                    },
-                                  ),
-                                  controller: startAddressController,
-                                  focusNode: startAddressFocusNode,
-                                  width: width,
-                                  onChanged: (String value) {
-                                    //// DONE: should probably call locationCallback something else, it does more than just deal with location
-                                    setState(() {
-                                      _startAddress = value;
-                                      ////DONE: should we be doing the above every time the user presses a new key?
-                                      searchPlaces(value);
-                                    });
-                                  }),
-                              const SizedBox(height: 10),
-                              _textField(
-                                  label: 'Destination',
-                                  hint: 'Choose destination',
-                                  prefixIcon: const Icon(Icons.looks_two),
-                                  controller: destinationAddressController,
-                                  focusNode: destinationAddressFocusNode,
-                                  width: width,
-                                  onChanged: (String value) {
-                                    setState(() {
-                                      _destinationAddress = value;
-                                      searchPlaces(value);
-                                    });
-                                  }),
-                            ])),
+                        child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
+                          // const Text(
+                          //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
+                          //   style: TextStyle(fontSize: 20.0),
+                          // ),
+                          const SizedBox(height: 10),
+                          _textField(
+                              label: 'Start',
+                              hint: 'Choose starting point',
+                              prefixIcon: const Icon(Icons.looks_one),
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.my_location),
+                                onPressed: () {
+                                  startAddressController.text = _currentAddress;
+                                  _startAddress = _currentAddress;
+                                },
+                              ),
+                              controller: startAddressController,
+                              focusNode: startAddressFocusNode,
+                              width: width,
+                              onChanged: (String value) {
+                                //// DONE: should probably call locationCallback something else, it does more than just deal with location
+                                setState(() {
+                                  _startAddress = value;
+                                  ////DONE: should we be doing the above every time the user presses a new key?
+                                  searchPlaces(value);
+                                });
+                              }),
+                          const SizedBox(height: 10),
+                          _textField(
+                              label: 'Destination',
+                              hint: 'Choose destination',
+                              prefixIcon: const Icon(Icons.looks_two),
+                              controller: destinationAddressController,
+                              focusNode: destinationAddressFocusNode,
+                              width: width,
+                              onChanged: (String value) {
+                                setState(() {
+                                  _destinationAddress = value;
+                                  searchPlaces(value);
+                                });
+                              }),
+                        ])),
                   ),
 
                   //adds spacing between the search bars and results
                   SizedBox(height: 10),
 
                   //suggestions list (only show if there is a search):
-                  if (searchResults != null &&
-                      (startAddressController.text != '' ||
-                          destinationAddressController.text != '') &&
-                      searchResults.length > 0)
+                  if (activeAddressController != null &&
+                      activeAddressController.text != '' &&
+                      searchResults.isNotEmpty)
                     ListView.builder(
                       shrinkWrap: true,
                       itemBuilder: ((context, index) {
                         return Card(
                             elevation: 3,
-                            margin: EdgeInsets.symmetric(
-                                vertical: 2, horizontal: 10),
+                            margin: EdgeInsets.symmetric(vertical: 2, horizontal: 10),
                             color: Colors.black.withOpacity(0.7),
                             child: ListTile(
                               title: Text(searchResults[index].description,
@@ -387,8 +395,7 @@ class _MapViewState extends State<MapView> {
                       padding: const EdgeInsets.only(bottom: 10.0),
                       child: FloatingActionButton(
                         onPressed: () {
-                          mapController.animateCamera(
-                              CameraUpdate.newCameraPosition(CameraPosition(
+                          mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
                             target: LatLng(
                               _currentPosition.latitude,
                               _currentPosition.longitude,

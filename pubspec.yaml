@@ -37,6 +37,7 @@ dependencies:
   geolocator: ^7.0.3
   flutter_polyline_points: ^1.0.0
   flutter_google_places: ^0.3.0
+  flutter_dotenv: ^5.0.2
   provider: ^6.0.2
 
 
@@ -60,6 +61,11 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
+
+  assets:
+    - .env
+    - lib/dummy_data/
+    - lib/dummy_data/places_request/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
