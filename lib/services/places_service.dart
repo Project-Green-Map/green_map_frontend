@@ -1,6 +1,8 @@
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert; // package for converting between file types
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:map/models/place.dart';
 
 import 'package:map/models/place_search.dart';
 
@@ -23,5 +25,15 @@ class PlacesService {
 
     var jsonResults = json['predictions'] as List;
     return jsonResults.map((place) => PlaceSearch.fromJson(place)).toList();
+  }
+
+  Future<Place> getPlace(String placeId) async {
+    final key = apiManager.getKey();
+    Uri uri = Uri.parse(
+        'https://maps.googleapis.com/maps/api/place/details/json?key=$key&place_id=$placeId&fields=formatted_address,geometry');
+    //https://maps.googleapis.com/maps/api/place/details/json?key=AIzaSyCJ4vZceHbTKsYhCaZuy58pQ7WrKhlk9Yo&place_id=ChIJcWGw3Ytzj1QR7Ui7HnTz6Dg&fields=formatted_address,geometry
+    var response = await http.get(uri);
+    var json = convert.jsonDecode(response.body)['result'] as Map<String, dynamic>;
+    return Place.fromJson(json);
   }
 }

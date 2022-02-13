@@ -66,6 +66,7 @@ flutter:
     - .env
     - lib/dummy_data/
     - lib/dummy_data/places_request/
+  #  - lib/dummy_data/polyline/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
