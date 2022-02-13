@@ -4,6 +4,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart'; //only use for Position objects. add functionality via geolocator_service.dart
 import 'package:map/models/place_search.dart';
+
 //import 'package:map/secrets.dart';
 import 'package:map/services/places_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -44,12 +45,12 @@ class _MapViewState extends State<MapView> {
 
   String _startAddress = '';
   String _destinationAddress = '';
-
-  late Position _destinationPosition;
+  LatLng _destinationPosition = LatLng(52.207099555585565, 0.1130482077789624);
+  
 
   final CameraPosition cambridgePosition = const CameraPosition(
     target: LatLng(52.2053, 0.1218),
-    zoom: 12,
+    zoom: 14,
   );
 
   final startAddressController = TextEditingController();
@@ -65,11 +66,14 @@ class _MapViewState extends State<MapView> {
   final _routingService = RoutingService();
   final _placesService = PlacesService();
 
+  late TravelMode _travelMode = TravelMode.walking;
+
   List<PlaceSearch> searchResults = [];
 
   Set<Marker> _markers = {};
 
   late PolylinePoints polylinePoints;
+
   // Map<PolylineId, Polyline> polylines = {};
   List<LatLng> polylineCoordinates = [];
   Set<Polyline> _polylines = Set<Polyline>();
@@ -151,19 +155,23 @@ class _MapViewState extends State<MapView> {
 
     await updateCurrentLocation();
     moveCameraToCurrentLocation();
-    final LatLng destPosition = const LatLng(52.207099555585565, 0.1130482077789624);
+    _destinationPosition = LatLng(52.20874474814809, 0.11845337008475813);
     Marker marker = Marker(
-        markerId: const MarkerId('Trinity College'),
-        position: destPosition,
-        infoWindow: const InfoWindow(
-          title: 'Trinity College',
-          snippet: 'CB2 1TQ, Trinity St, Cambridge',
+        markerId: MarkerId('Byron Burger'),
+        position: _destinationPosition,
+        infoWindow: InfoWindow(
+          title: 'Byron Burger',
+          snippet: '12 Bridge St, Cambridge CB2 1UF',
         ));
     setState(() {
       _markers.add(marker);
     });
-    await _createPolylines(_currentPosition.latitude, _currentPosition.longitude,
-        destPosition.latitude, destPosition.longitude);
+    await _createPolylines(
+        _currentPosition.latitude,
+        _currentPosition.longitude,
+        _destinationPosition.latitude,
+        _destinationPosition.longitude,
+        _travelMode);
   }
 
   //in an effort to save API requests, only call when necessary
@@ -186,9 +194,16 @@ class _MapViewState extends State<MapView> {
           ////Done: This doesn't work for street names, e.g. "17, , CB2 3NE, UK". Could we see which ones are non-null and use those?
 
           bool isFirst = true;
-          List<String?> placeTags = [place.name, place.locality, place.postalCode, place.country];
+          List<String?> placeTags = [
+            place.name,
+            place.locality,
+            place.postalCode,
+            place.country
+          ];
           for (int i = 0; i < placeTags.length; i++) {
-            if (placeTags.elementAt(i)?.isNotEmpty ?? false) {
+            if (placeTags
+                .elementAt(i)
+                ?.isNotEmpty ?? false) {
               _currentAddress += "${placeTags.elementAt(i)}";
             }
 
@@ -218,17 +233,34 @@ class _MapViewState extends State<MapView> {
     );
   }
 
+  _updateTravelModeAndRoutes(travelMode) async {
+    setState(() {
+      _travelMode = travelMode;
+      _polylines.clear();
+      polylineCoordinates.clear();
+    });
+    await _createPolylines(
+        _currentPosition.latitude,
+        _currentPosition.longitude,
+        _destinationPosition.latitude,
+        _destinationPosition.longitude,
+        travelMode);
+  }
+
   // Create the polylines for showing the route between two places
-  _createPolylines(
-    double startLatitude,
-    double startLongitude,
-    double destinationLatitude,
-    double destinationLongitude,
-  ) async {
+  _createPolylines(double startLatitude,
+      double startLongitude,
+      double destinationLatitude,
+      double destinationLongitude,
+      TravelMode travelMode) async {
     print("_createPolylines() called");
 
     PolylineResult result = await _routingService.getRouteFromCoordinates(
-        startLatitude, startLongitude, destinationLatitude, destinationLongitude);
+        startLatitude,
+        startLongitude,
+        destinationLatitude,
+        destinationLongitude,
+        travelMode);
 
     if (result.status == 'OK') {
       // if (result.points.isNotEmpty) {
@@ -240,31 +272,31 @@ class _MapViewState extends State<MapView> {
     setState(() {
       _polylines.add(Polyline(
         width: 5,
-        polylineId: PolylineId('route_to_trinity'),
+        polylineId: PolylineId('route_to_byron'),
         color: Colors.red,
         points: polylineCoordinates,
       ));
     });
 
-    // PolylineId id = const PolylineId('polyline route');
-    // Polyline polyline = Polyline(
-    //   polylineId: id,
-    //   color: Colors.red,
-    //   points: polylineCoordinates,
-    //   width: 3,
-    // );
-    // polylines[id] = polyline;
     print("Polylines computed");
   }
 
   searchPlaces(String searchTerm) async {
-    searchResults = (searchTerm.isEmpty) ? [] : await _placesService.getAutocomplete(searchTerm);
+    searchResults = (searchTerm.isEmpty)
+        ? []
+        : await _placesService.getAutocomplete(searchTerm);
   }
 
   @override
   Widget build(BuildContext context) {
-    var height = MediaQuery.of(context).size.height;
-    var width = MediaQuery.of(context).size.width;
+    var height = MediaQuery
+        .of(context)
+        .size
+        .height;
+    var width = MediaQuery
+        .of(context)
+        .size
+        .width;
     return Scaffold(
       body: Stack(
         children: <Widget>[
@@ -298,94 +330,189 @@ class _MapViewState extends State<MapView> {
           //search area
           SafeArea(
               child: Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 10.0),
-              //column below is for (1) container for search bars and (2) container for prediction results
-              child: Column(
-                children: [
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white70,
-                      borderRadius: BorderRadius.all(
-                        Radius.circular(20.0),
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10.0),
+                  //column below is for (1) container for search bars and (2) container for prediction results
+                  child: Column(
+                    children: [
+                      Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white70,
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(20.0),
+                          ),
+                        ),
+                        width: width * 0.9,
+                        child: Padding(
+                            padding: const EdgeInsets.only(
+                                top: 10.0, bottom: 10.0),
+                            //column below is for the two search bars
+                            child:
+                            Column(mainAxisSize: MainAxisSize.min, children: <
+                                Widget>[
+                              // const Text(
+                              //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
+                              //   style: TextStyle(fontSize: 20.0),
+                              // ),
+                              const SizedBox(height: 10),
+                              _textField(
+                                  label: 'Start',
+                                  hint: 'Choose starting point',
+                                  prefixIcon: const Icon(Icons.looks_one),
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.my_location),
+                                    onPressed: () {
+                                      startAddressController.text =
+                                          _currentAddress;
+                                      _startAddress = _currentAddress;
+                                    },
+                                  ),
+                                  controller: startAddressController,
+                                  focusNode: startAddressFocusNode,
+                                  width: width,
+                                  onChanged: (String value) {
+                                    //// DONE: should probably call locationCallback something else, it does more than just deal with location
+                                    setState(() {
+                                      _startAddress = value;
+                                      ////DONE: should we be doing the above every time the user presses a new key?
+                                      searchPlaces(value);
+                                    });
+                                  }),
+                              const SizedBox(height: 10),
+                              _textField(
+                                  label: 'Destination',
+                                  hint: 'Choose destination',
+                                  prefixIcon: const Icon(Icons.looks_two),
+                                  controller: destinationAddressController,
+                                  focusNode: destinationAddressFocusNode,
+                                  width: width,
+                                  onChanged: (String value) {
+                                    setState(() {
+                                      _destinationAddress = value;
+                                      searchPlaces(value);
+                                    });
+                                  }),
+                              const SizedBox(height: 10),
+                              Row(
+                                  mainAxisAlignment: MainAxisAlignment
+                                      .spaceEvenly,
+                                  children: [
+                                    TextButton(
+                                      child: const Text(
+                                        "Walk",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blueGrey,
+                                        ),
+                                      ),
+                                      style: ButtonStyle(
+                                          shape: MaterialStateProperty.all<
+                                              RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                                borderRadius: BorderRadius
+                                                    .circular(18.0),
+                                                side: const BorderSide(
+                                                  color: Colors.blueAccent,
+                                                  width: 2,
+                                                ),
+                                              ))),
+                                      onPressed: () => {_updateTravelModeAndRoutes(TravelMode.walking)},
+                                    ),
+                                    TextButton(
+                                      child: const Text(
+                                        "Transit",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blueGrey,
+                                        ),
+                                      ),
+                                      style: ButtonStyle(
+                                          shape: MaterialStateProperty.all<
+                                              RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                                borderRadius: BorderRadius
+                                                    .circular(18.0),
+                                                side: const BorderSide(
+                                                  color: Colors.blueAccent,
+                                                  width: 2,
+                                                ),
+                                              ))),
+                                      onPressed: () => {_updateTravelModeAndRoutes(TravelMode.transit)},
+                                    ),
+                                    TextButton(
+                                      child: const Text(
+                                        "Drive",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blueGrey,
+                                        ),
+                                      ),
+                                      style: ButtonStyle(
+                                          shape: MaterialStateProperty.all<
+                                              RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                                borderRadius: BorderRadius
+                                                    .circular(18.0),
+                                                side: const BorderSide(
+                                                  color: Colors.blueAccent,
+                                                  width: 2,
+                                                ),
+                                              ))),
+                                      onPressed: () => {_updateTravelModeAndRoutes(TravelMode.driving)},
+                                    ),
+                                    TextButton(
+                                      child: const Text(
+                                        "Cycle",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blueGrey,
+                                        ),
+                                      ),
+                                      style: ButtonStyle(
+                                          shape: MaterialStateProperty.all<
+                                              RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                                borderRadius: BorderRadius
+                                                    .circular(18.0),
+                                                side: const BorderSide(
+                                                  color: Colors.blueAccent,
+                                                  width: 2,
+                                                ),
+                                              ))),
+                                      onPressed: () => {_updateTravelModeAndRoutes(TravelMode.bicycling)},
+                                    ),
+                                  ]),
+                            ])),
                       ),
-                    ),
-                    width: width * 0.9,
-                    child: Padding(
-                        padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-                        //column below is for the two search bars
-                        child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
-                          // const Text(
-                          //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
-                          //   style: TextStyle(fontSize: 20.0),
-                          // ),
-                          const SizedBox(height: 10),
-                          _textField(
-                              label: 'Start',
-                              hint: 'Choose starting point',
-                              prefixIcon: const Icon(Icons.looks_one),
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.my_location),
-                                onPressed: () {
-                                  startAddressController.text = _currentAddress;
-                                  _startAddress = _currentAddress;
-                                },
-                              ),
-                              controller: startAddressController,
-                              focusNode: startAddressFocusNode,
-                              width: width,
-                              onChanged: (String value) {
-                                //// DONE: should probably call locationCallback something else, it does more than just deal with location
-                                setState(() {
-                                  _startAddress = value;
-                                  ////DONE: should we be doing the above every time the user presses a new key?
-                                  searchPlaces(value);
-                                });
-                              }),
-                          const SizedBox(height: 10),
-                          _textField(
-                              label: 'Destination',
-                              hint: 'Choose destination',
-                              prefixIcon: const Icon(Icons.looks_two),
-                              controller: destinationAddressController,
-                              focusNode: destinationAddressFocusNode,
-                              width: width,
-                              onChanged: (String value) {
-                                setState(() {
-                                  _destinationAddress = value;
-                                  searchPlaces(value);
-                                });
-                              }),
-                        ])),
+
+                      //adds spacing between the search bars and results
+                      SizedBox(height: 10),
+
+                      //suggestions list (only show if there is a search):
+                      if (activeAddressController != null &&
+                          activeAddressController.text != '' &&
+                          searchResults.isNotEmpty)
+                        ListView.builder(
+                          shrinkWrap: true,
+                          itemBuilder: ((context, index) {
+                            return Card(
+                                elevation: 3,
+                                margin: EdgeInsets.symmetric(
+                                    vertical: 2, horizontal: 10),
+                                color: Colors.black.withOpacity(0.7),
+                                child: ListTile(
+                                  title: Text(searchResults[index].description,
+                                      style: TextStyle(color: Colors.white)),
+                                ));
+                          }),
+                          itemCount: min(3, searchResults.length),
+                          //TODO: do we need more than 3?
+                        ),
+                    ],
                   ),
-
-                  //adds spacing between the search bars and results
-                  SizedBox(height: 10),
-
-                  //suggestions list (only show if there is a search):
-                  if (activeAddressController != null &&
-                      activeAddressController.text != '' &&
-                      searchResults.isNotEmpty)
-                    ListView.builder(
-                      shrinkWrap: true,
-                      itemBuilder: ((context, index) {
-                        return Card(
-                            elevation: 3,
-                            margin: EdgeInsets.symmetric(vertical: 2, horizontal: 10),
-                            color: Colors.black.withOpacity(0.7),
-                            child: ListTile(
-                              title: Text(searchResults[index].description,
-                                  style: TextStyle(color: Colors.white)),
-                            ));
-                      }),
-                      itemCount: min(3, searchResults.length),
-                      //TODO: do we need more than 3?
-                    ),
-                ],
-              ),
-            ),
-          )),
+                ),
+              )),
 
           //centre button
           SafeArea(
@@ -395,13 +522,14 @@ class _MapViewState extends State<MapView> {
                       padding: const EdgeInsets.only(bottom: 10.0),
                       child: FloatingActionButton(
                         onPressed: () {
-                          mapController.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-                            target: LatLng(
-                              _currentPosition.latitude,
-                              _currentPosition.longitude,
-                            ),
-                            zoom: 12.0,
-                          )));
+                          mapController.animateCamera(
+                              CameraUpdate.newCameraPosition(CameraPosition(
+                                target: LatLng(
+                                  _currentPosition.latitude,
+                                  _currentPosition.longitude,
+                                ),
+                                zoom: 14.0,
+                              )));
                         },
                         child: const Text(
                             'Center'), //TODO: centre (UK) or center (US)? (or shall we just use an icon :P)

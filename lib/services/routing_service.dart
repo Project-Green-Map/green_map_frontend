@@ -6,12 +6,12 @@ class RoutingService {
   APIManager apiManager = APIManager();
 
   Future<PolylineResult> getRouteFromCoordinates(
-      startLatitude, startLongitude, destinationLatitude, destinationLongitude) async {
+      startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode) async {
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
       apiManager.getKey(),
       PointLatLng(startLatitude, startLongitude),
       PointLatLng(destinationLatitude, destinationLongitude),
-      travelMode: TravelMode.driving,
+      travelMode: travelMode,
     );
 
     return result;
