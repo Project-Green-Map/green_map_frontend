@@ -1,16 +1,29 @@
 # green_map_frontend
 
-A new Flutter project.
+The Flutter frontend for the Green Maps project.
 
-## Getting Started
+## Installation
 
-This project is a starting point for a Flutter application.
+- Build a fresh Flutter project locally called `com.green_map.green_map`.
+- Pull from Git, overwrite any local files
+- Use an Android VM to test the app (Android Studio has a good Virtual Device Manager)
+- Place our .env file in the root directory. We'll send you this directly, it has API secrets. :eyes:
 
-A few resources to get you started if this is your first Flutter project:
+## Project Structure
+```
+├── android                 # Android build files
+├── build                   # Flutter temp files
+├── ios                     # iOS build files
+├── lib                     # Main program code
+    ├── dummy_data          # "Fake" data to limit API requests made during testing.
+    ├── models              # Models of structures from e.g. JSONs for easy porting to Dart
+    ├── services            # Direct interaction with APIs
+    ├── main.dart           # First code run by Flutter
+    └── MyApp.dart          # Screen-related code.
+├── test                    # Unit tests
+├── web                     # App icons
+├── .env                    # App secrets, API keys
+├── pubspec.yaml            # Imports and includes
+└── README.md
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```
