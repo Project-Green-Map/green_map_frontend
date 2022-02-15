@@ -8,16 +8,27 @@ class RoutingService {
   final polylinePoints = PolylinePoints();
   APIManager apiManager = APIManager();
 
+  Map<TravelMode, String> travelModeToString = {
+    TravelMode.driving: "DRIVING",
+    TravelMode.bicycling: "BICYCLING",
+    TravelMode.transit: "TRANSIT",
+    TravelMode.walking: "WALKING",
+  };
+
   Future<PolylineResult> getRouteFromCoordinates_debug(
-      startLatitude,
-      startLongitude,
-      destinationLatitude,
-      destinationLongitude,
-      travelMode) async {
+      startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode) async {
     print("getRouteFromCoordinates_debug() called");
 
-    Uri uri = Uri.parse(
-        "https://us-central1-gifted-pillar-339221.cloudfunctions.net/api-channel-dev?travelMode=$travelMode");
+    String? travelModeString = travelModeToString[travelMode];
+    travelModeString ??= "DRIVING"; // set if null
+
+    Uri uri = Uri.parse("""
+        https://us-central1-gifted-pillar-339221.cloudfunctions.net/api-channel-dev 
+        ?origin=$startLatitude,$startLongitude
+        &destination=$destinationLatitude,$destinationLongitude
+        &mode=$travelModeString
+        """);
+    //TODO: In above, placeID is preferred over coordinates
 
     print("http get");
     http.Response encodedString = await http.get(uri);
@@ -40,8 +51,8 @@ class RoutingService {
     return result;
   }
 
-  Future<PolylineResult> getRouteFromCoordinates(startLatitude, startLongitude,
-      destinationLatitude, destinationLongitude, travelMode) async {
+  Future<PolylineResult> getRouteFromCoordinates(
+      startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode) async {
     List<PointLatLng> _points = polylinePoints.decodePolyline(
         "ids}Hk~UhK]jD}BhGuIlDgFnFeCRS@EFAzASRBEZRbOqBl\\u@~KpI|LaAld@mFpg@oB`UZhKjDlSpF|ShTxa@|FpHbAItA^VhAb@jDnD`FtFjDtGNdRaFnQmHj`@iWfWgWvOmSx\\yk@tQg`@fLsThL}MbS}L`IuBlMgAld@rCrKa@pMaCtMiF~O}KvNsL|t@om@tIuGvRiJ|NsCp`@_FbW_MxM{Kp\\kYtj@ue@lToUrb@kg@j]k[jf@k^dNqLlLkPxLk_@jGef@~B}L~GsSpI{NjG_HbSkLjQ{ElI}@rLOvYlD~`@zJpYl@nQkBhNsDlb@oUtXeM~RgD~J]hUnAnXpFrZtDhRt@d`@c@rWkCx`@}IhSoJbIoHhJsMjPa^jOuSdPsKdRaEfORhNjChLhA|GUtOwD`Z}GdVk@nUmA|RqJrXqYjQ{I~M{A~P|AtOlHvGlE`OnHrJdCpTjAxUyC`McF|HqDpLyCrJg@lIf@jOnE~I`G~NhQtXhb@tTnShNhIbP~F~c@zNfQvHb_@rSbTfO~ZxWfVrVvMxJtMfElHn@nJSdLaCdSeMnLkNxJqI`NaGpImAxQj@bLpDpLdIvNtOlNvJ`O`EpSbAtOlDxRlNzN~OxIbGdNvEzGv@`e@|Dl[tIhr@fXzi@bVv[zT|VvUj`@vc@jMvKrVxNtn@nUtRpNxLjLlH`GbM~FvN`CvIDzJiAhRiGn]qJfWoEnTcDd{@gUnQqAxMdA~JrCfMjHzUhOpUxH`YdN|ZhWzUbYfSvYbIfIpYbQ`d@xXbe@da@`ZpYlg@pi@r\\|f@rg@zbAnVhb@r`@nl@xJ~LzQpLzQxD`RhDlKnHtJbNbPte@|InTzCvCdF`BvGWtHwCdG{@lEl@~TnIzFzD|CnFjMvU~FzM`ApNgAnO_FrSkD|XB~QpEvl@S`UeB`PiVd{@{CjXOri@IxW}BjOwV~j@qMj\\sHdIeIdBgErCiEpJwBrPb@~DpA~@xApBBv@cAF}A~@z@xLfEvQvBfKVZzA`A~DI`@MR@c@`H]~HEv@xD]`@Ox@Gt@SdEs@|ATtJtDnCI|QoAtGvDpJlUhCnExChBfHfC|CtHbDrDlRtG~BnCJvFcApFi@hE~@tHjBxKG`Ga@lFnCr@nIlCzKrBfG~@nIhVlMn_@nLpNnNdN~E~JfOhn@rOlVtTr_@dG~O|ArAfEdBrE|DxGfJtDb@vD`LrHtXzA`B`CFnHFxO@vJHzQSvRmBt_@oDfM~A~ClClEzFvH|JlD`@lAGBt@UtFlAvERbCk@`@UL");
     PolylineResult result = PolylineResult(
