@@ -151,10 +151,10 @@ class _MapViewState extends State<MapView> {
     //called when the map is finished loading
     print("startupLogic() called");
 
-    setState(() async {
-      await updateCurrentLocation();
-      _startPosition =
-          LatLng(_currentPosition.latitude, _currentPosition.longitude);
+    await updateCurrentLocation();
+
+    setState(() {
+      _startPosition = LatLng(_currentPosition.latitude, _currentPosition.longitude);
     });
 
     moveCameraToCurrentLocation();
@@ -194,16 +194,11 @@ class _MapViewState extends State<MapView> {
     await _geocodingService.getCurrentPlacemark(_currentPosition).then((place) {
       setState(() {
         if (place != null) {
-          // _currentAddress = "${place.name}, ${place.locality}, ${place.postalCode}, ${place.country}";
+          //// _currentAddress = "${place.name}, ${place.locality}, ${place.postalCode}, ${place.country}";
           ////Done: This doesn't work for street names, e.g. "17, , CB2 3NE, UK". Could we see which ones are non-null and use those?
 
           bool isFirst = true;
-          List<String?> placeTags = [
-            place.name,
-            place.locality,
-            place.postalCode,
-            place.country
-          ];
+          List<String?> placeTags = [place.name, place.locality, place.postalCode, place.country];
           for (int i = 0; i < placeTags.length; i++) {
             if (placeTags.elementAt(i)?.isNotEmpty ?? false) {
               _currentAddress += "${placeTags.elementAt(i)}";
@@ -241,25 +236,18 @@ class _MapViewState extends State<MapView> {
       _polylines.clear();
       polylineCoordinates.clear();
     });
-    await _createPolylines_debug(
-        _startPosition.latitude,
-        _startPosition.longitude,
-        _destinationPosition.latitude,
-        _destinationPosition.longitude,
-        travelMode);
+    await _createPolylines_debug(_startPosition.latitude, _startPosition.longitude,
+        _destinationPosition.latitude, _destinationPosition.longitude, travelMode);
   }
 
   void moveCameraToCurrentLocation() async {
-    moveCameraToPosition(
-        _currentPosition.latitude, _currentPosition.longitude, 14);
+    moveCameraToPosition(_currentPosition.latitude, _currentPosition.longitude, 14);
   }
 
-  _createPolylines_debug(double startLatitude,
-      double startLongitude,
-      double destinationLatitude,
-      double destinationLongitude,
-      TravelMode travelMode) async {
-    PolylineResult result = await _routingService.getRouteFromCoordinates_debug(startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
+  _createPolylines_debug(double startLatitude, double startLongitude, double destinationLatitude,
+      double destinationLongitude, TravelMode travelMode) async {
+    PolylineResult result = await _routingService.getRouteFromCoordinates_debug(
+        startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
     if (result.status == 'OK') {
       // if (result.points.isNotEmpty) {
       for (var point in result.points) {
@@ -280,20 +268,12 @@ class _MapViewState extends State<MapView> {
   }
 
   // Create the polylines for showing the route between two places
-  _createPolylines(
-      double startLatitude,
-      double startLongitude,
-      double destinationLatitude,
-      double destinationLongitude,
-      TravelMode travelMode) async {
+  _createPolylines(double startLatitude, double startLongitude, double destinationLatitude,
+      double destinationLongitude, TravelMode travelMode) async {
     print("_createPolylines() called");
 
     PolylineResult result = await _routingService.getRouteFromCoordinates(
-        startLatitude,
-        startLongitude,
-        destinationLatitude,
-        destinationLongitude,
-        travelMode);
+        startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
 
     if (result.status == 'OK') {
       // if (result.points.isNotEmpty) {
@@ -315,9 +295,7 @@ class _MapViewState extends State<MapView> {
   }
 
   searchPlaces(String searchTerm) async {
-    searchResults = (searchTerm.isEmpty)
-        ? []
-        : await _placesService.getAutocomplete(searchTerm);
+    searchResults = (searchTerm.isEmpty) ? [] : await _placesService.getAutocomplete(searchTerm);
   }
 
   setSelectedLocation(String placeId, bool moveCamera) async {
@@ -358,8 +336,7 @@ class _MapViewState extends State<MapView> {
     activeAddressController = null;
 
     if (moveCamera) {
-      moveCameraToPosition(
-          place.geometry.latLng.latitude, place.geometry.latLng.longitude, 14);
+      moveCameraToPosition(place.geometry.latLng.latitude, place.geometry.latLng.longitude, 14);
     }
   }
 
@@ -384,8 +361,7 @@ class _MapViewState extends State<MapView> {
           ),
 
           //suggestions box background (only show if there is a search):
-          if (startAddressFocusNode.hasFocus ||
-              destinationAddressFocusNode.hasFocus)
+          if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
             Container(
               height: height / 1.3,
               decoration: BoxDecoration(
@@ -414,9 +390,7 @@ class _MapViewState extends State<MapView> {
                     child: Padding(
                         padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
                         //column below is for the two search bars + transit options
-                        child:
-                            Column(mainAxisSize: MainAxisSize.min, children: <
-                                Widget>[
+                        child: Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
                           // const Text(
                           //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
                           //   style: TextStyle(fontSize: 20.0),
@@ -462,105 +436,89 @@ class _MapViewState extends State<MapView> {
                           //spacer
                           const SizedBox(height: 10),
 
-                          if (_startAddress != "" && _destinationAddress != "")
+                          if (_startAddress != "" &&
+                              _destinationAddress != "" &&
+                              !startAddressFocusNode.hasFocus &&
+                              !destinationAddressFocusNode.hasFocus)
                             //row containing transit options
-                            Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  TextButton(
-                                    child: const Text(
-                                      "Walk",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.blueGrey,
-                                      ),
-                                    ),
-                                    style: ButtonStyle(
-                                        shape: MaterialStateProperty.all<
-                                                RoundedRectangleBorder>(
-                                            RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18.0),
-                                      side: const BorderSide(
-                                        color: Colors.blueAccent,
-                                        width: 2,
-                                      ),
-                                    ))),
-                                    onPressed: () => {
-                                      _updateTravelModeAndRoutes(
-                                          TravelMode.walking)
-                                    },
+                            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                              TextButton(
+                                child: const Text(
+                                  "Walk",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.blueGrey,
                                   ),
-                                  TextButton(
-                                    child: const Text(
-                                      "Transit",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.blueGrey,
-                                      ),
-                                    ),
-                                    style: ButtonStyle(
-                                        shape: MaterialStateProperty.all<
-                                                RoundedRectangleBorder>(
-                                            RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18.0),
-                                      side: const BorderSide(
-                                        color: Colors.blueAccent,
-                                        width: 2,
-                                      ),
-                                    ))),
-                                    onPressed: () => {
-                                      _updateTravelModeAndRoutes(
-                                          TravelMode.transit)
-                                    },
+                                ),
+                                style: ButtonStyle(
+                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18.0),
+                                  side: const BorderSide(
+                                    color: Colors.blueAccent,
+                                    width: 2,
                                   ),
-                                  TextButton(
-                                    child: const Text(
-                                      "Drive",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.blueGrey,
-                                      ),
-                                    ),
-                                    style: ButtonStyle(
-                                        shape: MaterialStateProperty.all<
-                                                RoundedRectangleBorder>(
-                                            RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18.0),
-                                      side: const BorderSide(
-                                        color: Colors.blueAccent,
-                                        width: 2,
-                                      ),
-                                    ))),
-                                    onPressed: () => {
-                                      _updateTravelModeAndRoutes(
-                                          TravelMode.driving)
-                                    },
+                                ))),
+                                onPressed: () => {_updateTravelModeAndRoutes(TravelMode.walking)},
+                              ),
+                              TextButton(
+                                child: const Text(
+                                  "Transit",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.blueGrey,
                                   ),
-                                  TextButton(
-                                    child: const Text(
-                                      "Cycle",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.blueGrey,
-                                      ),
-                                    ),
-                                    style: ButtonStyle(
-                                        shape: MaterialStateProperty.all<
-                                                RoundedRectangleBorder>(
-                                            RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18.0),
-                                      side: const BorderSide(
-                                        color: Colors.blueAccent,
-                                        width: 2,
-                                      ),
-                                    ))),
-                                    onPressed: () => {
-                                      _updateTravelModeAndRoutes(
-                                          TravelMode.bicycling)
-                                    },
+                                ),
+                                style: ButtonStyle(
+                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18.0),
+                                  side: const BorderSide(
+                                    color: Colors.blueAccent,
+                                    width: 2,
                                   ),
-                                ]),
+                                ))),
+                                onPressed: () => {_updateTravelModeAndRoutes(TravelMode.transit)},
+                              ),
+                              TextButton(
+                                child: const Text(
+                                  "Drive",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.blueGrey,
+                                  ),
+                                ),
+                                style: ButtonStyle(
+                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18.0),
+                                  side: const BorderSide(
+                                    color: Colors.blueAccent,
+                                    width: 2,
+                                  ),
+                                ))),
+                                onPressed: () => {_updateTravelModeAndRoutes(TravelMode.driving)},
+                              ),
+                              TextButton(
+                                child: const Text(
+                                  "Cycle",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.blueGrey,
+                                  ),
+                                ),
+                                style: ButtonStyle(
+                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18.0),
+                                  side: const BorderSide(
+                                    color: Colors.blueAccent,
+                                    width: 2,
+                                  ),
+                                ))),
+                                onPressed: () => {_updateTravelModeAndRoutes(TravelMode.bicycling)},
+                              ),
+                            ]),
                         ])),
                   ),
 
@@ -568,22 +526,19 @@ class _MapViewState extends State<MapView> {
                   SizedBox(height: 10),
 
                   //suggestions list (only show if there is a search):
-                  if (startAddressFocusNode.hasFocus ||
-                      destinationAddressFocusNode.hasFocus)
+                  if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
                     ListView.builder(
                       shrinkWrap: true,
                       itemBuilder: ((context, index) {
                         return Card(
                             elevation: 3,
-                            margin: EdgeInsets.symmetric(
-                                vertical: 2, horizontal: 10),
+                            margin: EdgeInsets.symmetric(vertical: 2, horizontal: 10),
                             color: Colors.black.withOpacity(0.7),
                             child: ListTile(
                               title: Text(searchResults[index].description,
                                   style: TextStyle(color: Colors.white)),
                               onTap: () async {
-                                await setSelectedLocation(
-                                    searchResults[index].placeId, true);
+                                await setSelectedLocation(searchResults[index].placeId, true);
                                 activeAddressController = null;
                               },
                             ));

@@ -22,13 +22,10 @@ class RoutingService {
     String? travelModeString = travelModeToString[travelMode];
     travelModeString ??= "DRIVING"; // set if null
 
-    Uri uri = Uri.parse("""
-        https://us-central1-gifted-pillar-339221.cloudfunctions.net/api-channel-dev 
-        ?origin=$startLatitude,$startLongitude
-        &destination=$destinationLatitude,$destinationLongitude
-        &mode=$travelModeString
-        """);
-    //TODO: In above, placeID is preferred over coordinates
+    Uri uri = Uri.parse(
+        "https://us-central1-gifted-pillar-339221.cloudfunctions.net/api-channel-dev?origin=$startLatitude,$startLongitude&destination=$destinationLatitude,$destinationLongitude&mode=$travelModeString");
+    //if you ever figure out how to split a string over several lines, please let me know ;)
+    //TODO: In above, placeID is "preferred" over coordinates
 
     print("http get");
     http.Response encodedString = await http.get(uri);
