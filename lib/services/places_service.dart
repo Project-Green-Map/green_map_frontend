@@ -15,9 +15,9 @@ class PlacesService {
   Future<List<PlaceSearch>> getAutocomplete(String search) async {
     final key = apiManager.getKey();
     //!Uncomment for real data
-    //Uri uri = Uri.parse('https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$search&key=$key');
-    //var response = await http.get(uri);
-    //var json = convert.jsonDecode(response.body);
+    // Uri uri = Uri.parse('https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$search&key=$key');
+    // var response = await http.get(uri);
+    // var json = convert.jsonDecode(response.body);
 
     //!Comment to remove dummy data
     var response = await rootBundle.loadString('lib/dummy_data/places_request/places_request.json');
