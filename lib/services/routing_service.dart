@@ -40,8 +40,8 @@ class RoutingService {
 
     Uri uri =
         Uri.parse("https://us-central1-gifted-pillar-339221.cloudfunctions.net/api-channel-dev?"
-            "origin=$startPlaceId"
-            "&destination=$destinationPlaceId"
+            "origin=place_id:$startPlaceId"
+            "&destination=place_id:$destinationPlaceId"
             "&mode=$travelModeString");
 
     return decodeRouteURI(uri);
