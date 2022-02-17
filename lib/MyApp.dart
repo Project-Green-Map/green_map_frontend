@@ -45,6 +45,8 @@ class _MapViewState extends State<MapView> {
   String _destinationAddress = '';
   LatLng _startPosition = LatLng(0, 0);
   LatLng _destinationPosition = LatLng(0, 0);
+  String _startPlaceId = '';
+  String _destinationPlaceId = '';
 
   final CameraPosition cambridgePosition = const CameraPosition(
     target: LatLng(52.2053, 0.1218),
@@ -246,8 +248,16 @@ class _MapViewState extends State<MapView> {
 
   _createPolylines_debug(double startLatitude, double startLongitude, double destinationLatitude,
       double destinationLongitude, TravelMode travelMode) async {
-    PolylineResult result = await _routingService.getRouteFromCoordinates_debug(
-        startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
+    PolylineResult result;
+    if (_startPlaceId == '' || _destinationPlaceId == '') {
+      print("(WARN) Sending coordinates to API, not placeID...");
+      result = await _routingService.getRouteFromCoordinates_debug(
+          startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
+    } else {
+      result = await _routingService.getRouteFromPlaceId_debug(
+          _startPlaceId, _destinationPlaceId, travelMode);
+    }
+
     if (result.status == 'OK') {
       // if (result.points.isNotEmpty) {
       for (var point in result.points) {
@@ -311,6 +321,7 @@ class _MapViewState extends State<MapView> {
       setState(() {
         _startAddress = place.name;
         _startPosition = place.geometry.latLng;
+        _startPlaceId = placeId;
         Marker marker = Marker(
           markerId: MarkerId('start'),
           position: _startPosition,
@@ -324,6 +335,7 @@ class _MapViewState extends State<MapView> {
       setState(() {
         _destinationAddress = place.name;
         _destinationPosition = place.geometry.latLng;
+        _destinationPlaceId = placeId;
         Marker marker = Marker(
           markerId: MarkerId('dest'),
           position: _destinationPosition,
