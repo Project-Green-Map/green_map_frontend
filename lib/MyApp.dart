@@ -54,6 +54,8 @@ class _MapViewState extends State<MapView> {
     zoom: 14,
   );
 
+  final int _routeNum = 3;
+
   final startAddressController = TextEditingController();
   final destinationAddressController = TextEditingController();
 
@@ -74,9 +76,11 @@ class _MapViewState extends State<MapView> {
   // Set<Marker> _markers = {};
   Map<MarkerId, Marker> _markers = {};
 
-  late PolylinePoints polylinePoints;
-  List<LatLng> polylineCoordinates = [];
-  Set<Polyline> _polylines = Set<Polyline>();
+  // late PolylinePoints polylinePoints;
+  // List<LatLng> polylineCoordinates = [];
+  // Set<Polyline> _polylines = Set<Polyline>();
+
+  Map<PolylineId, Polyline> _polylines = <PolylineId, Polyline>{};
 
   _MapViewState() {
     startAddressFocusNode.addListener(() {
@@ -244,73 +248,95 @@ class _MapViewState extends State<MapView> {
     setState(() {
       _travelMode = travelMode;
       _polylines.clear();
-      polylineCoordinates.clear();
+      // polylineCoordinates.clear();
     });
-    await _createPolylines_debug(_startPosition.latitude, _startPosition.longitude,
-        _destinationPosition.latitude, _destinationPosition.longitude, travelMode);
+    await _createMultiplePolylines(_startPlaceId, _destinationPlaceId, travelMode, _routeNum);
+    // await _createPolylines_debug(_startPosition.latitude, _startPosition.longitude,
+    //     _destinationPosition.latitude, _destinationPosition.longitude, travelMode);
   }
 
   void moveCameraToCurrentLocation() async {
     moveCameraToPosition(_currentPosition.latitude, _currentPosition.longitude, 14);
   }
 
-  _createPolylines_debug(double startLatitude, double startLongitude, double destinationLatitude,
-      double destinationLongitude, TravelMode travelMode) async {
-    PolylineResult result;
-    if (_startPlaceId == '' || _destinationPlaceId == '') {
-      print("(WARN) Sending coordinates to API, not placeID...");
-      result = await _routingService.getRouteFromCoordinates_debug(
-          startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
-    } else {
-      result = await _routingService.getRouteFromPlaceId_debug(
-          _startPlaceId, _destinationPlaceId, travelMode);
-    }
+  // LatLng middlePoint;
 
-    if (result.status == 'OK') {
-      // if (result.points.isNotEmpty) {
-      for (var point in result.points) {
-        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-      }
-    }
+  _createMultiplePolylines(startPlaceId, destinationPlaceId, travelMode, num) async{
+    print("_createMultiplePolylines() called");
+    Map<PolylineId, Polyline> polylines = await _routingService.getMultipleRouteFromPlaceId(
+        startPlaceId, destinationPlaceId, travelMode, num);
 
     setState(() {
-      _polylines.add(Polyline(
-        width: 5,
-        polylineId: PolylineId('route_1'),
-        color: Colors.red,
-        points: polylineCoordinates,
-      ));
+      _polylines = polylines;
     });
-
-    print("Polylines (debug) computed");
   }
 
-  // Create the polylines for showing the route between two places
-  _createPolylines(double startLatitude, double startLongitude, double destinationLatitude,
-      double destinationLongitude, TravelMode travelMode) async {
-    print("_createPolylines() called");
+  // _createPolylines_debug(double startLatitude, double startLongitude, double destinationLatitude,
+  //     double destinationLongitude, TravelMode travelMode) async {
+  //
+  //
+  //
+  //   PolylineResult result;
+  //   if (_startPlaceId == '' || _destinationPlaceId == '') {
+  //     print("(WARN) Sending coordinates to API, not placeID...");
+  //     result = await _routingService.getRouteFromCoordinates_debug(
+  //         startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
+  //   } else {
+  //     result = await _routingService.getRouteFromPlaceId_debug(
+  //         _startPlaceId, _destinationPlaceId, travelMode);
+  //   }
+  //
+  //   if (result.status == 'OK') {
+  //     // if (result.points.isNotEmpty) {
+  //     // int len = result.points.length;
+  //     // int cnt = 0;
+  //     for (var point in result.points) {
+  //       polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+  //       // cnt ++;
+  //       // if (cnt == len / 2){
+  //       //
+  //       // }
+  //     }
+  //   }
+  //
+  //   setState(() {
+  //     _polylines.add(Polyline(
+  //       width: 5,
+  //       polylineId: PolylineId('route_1'),
+  //       color: Colors.red,
+  //       points: polylineCoordinates,
+  //     ));
+  //   });
+  //
+  //   print("Polylines (debug) computed");
+  // }
 
-    PolylineResult result = await _routingService.getRouteFromCoordinates(
-        startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
-
-    if (result.status == 'OK') {
-      // if (result.points.isNotEmpty) {
-      for (var point in result.points) {
-        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-      }
-    }
-
-    setState(() {
-      _polylines.add(Polyline(
-        width: 5,
-        polylineId: PolylineId('route_1'),
-        color: Colors.red,
-        points: polylineCoordinates,
-      ));
-    });
-
-    print("Polylines computed");
-  }
+  // // Create the polylines for showing the route between two places
+  // _createPolylines(double startLatitude, double startLongitude, double destinationLatitude,
+  //     double destinationLongitude, TravelMode travelMode) async {
+  //   print("_createPolylines() called");
+  //
+  //   PolylineResult result = await _routingService.getRouteFromCoordinates(
+  //       startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
+  //
+  //   if (result.status == 'OK') {
+  //     // if (result.points.isNotEmpty) {
+  //     for (var point in result.points) {
+  //       polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+  //     }
+  //   }
+  //
+  //   setState(() {
+  //     _polylines.add(Polyline(
+  //       width: 5,
+  //       polylineId: PolylineId('route_1'),
+  //       color: Colors.red,
+  //       points: polylineCoordinates,
+  //     ));
+  //   });
+  //
+  //   print("Polylines computed");
+  // }
 
   searchPlaces(String searchTerm) async {
     searchResults = (searchTerm.isEmpty) ? [] : await _placesService.getAutocomplete(searchTerm);
@@ -376,7 +402,7 @@ class _MapViewState extends State<MapView> {
               mapController = controller;
               startupLogic(); // This logic ensures the map always loads before trying to move the camera, which itself has a currentPosition
             },
-            polylines: _polylines,
+            polylines: Set<Polyline>.of(_polylines.values),
             markers: Set.from(_markers.values),
           ),
 

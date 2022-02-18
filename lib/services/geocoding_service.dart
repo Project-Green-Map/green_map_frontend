@@ -23,17 +23,11 @@ class GeocodingService {
   Future<String> getPlaceIdFromCoordinates(lat, lng) async{
     final key = apiManager.getKey();
     Uri uri = Uri.parse('https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$key');
-    print(uri);
 
     http.Response encodedString = await http.get(uri);
     String response = encodedString.body;
-    print("uri converted to string");
-
-    print(response);
 
     var json = convert.jsonDecode(response);
-
-    print("json data parsed");
     String placeId = json['results'][0]['place_id'];
     return placeId;
   }
