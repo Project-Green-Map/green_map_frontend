@@ -450,265 +450,284 @@ class _MapViewState extends State<MapView> {
   Widget build(BuildContext context) {
     var height = MediaQuery.of(context).size.height;
     var width = MediaQuery.of(context).size.width;
-    return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          GoogleMap(
-            mapType: MapType.normal,
-            initialCameraPosition: cambridgePosition,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            onMapCreated: (GoogleMapController controller) {
-              mapController = controller;
-              startupLogic(); // This logic ensures the map always loads before trying to move the camera, which itself has a currentPosition
-            },
-            polylines: Set<Polyline>.of(_polylines.values),
-            markers: Set.from(_markers.values),
-          ),
-
-          //suggestions box background (only show if there is a search):
-          if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
-            Container(
-              height: height,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
-                backgroundBlendMode: BlendMode.darken,
-              ),
+    return GestureDetector(
+      onTap: () {
+        print("Detected tab.");
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        body: Stack(
+          children: <Widget>[
+            GoogleMap(
+              mapType: MapType.normal,
+              initialCameraPosition: cambridgePosition,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              onMapCreated: (GoogleMapController controller) {
+                mapController = controller;
+                startupLogic(); // This logic ensures the map always loads before trying to move the camera, which itself has a currentPosition
+              },
+              polylines: Set<Polyline>.of(_polylines.values),
+              markers: Set.from(_markers.values),
             ),
 
-          //search area
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 10.0),
-                //column below is for (1) container for search bars and (2) container for prediction results
-                child: Column(
-                  children: [
-                    Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white70,
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(20.0),
+            //suggestions box background (only show if there is a search):
+            if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
+              Container(
+                height: height,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  backgroundBlendMode: BlendMode.darken,
+                ),
+              ),
+
+            //search area
+            WillPopScope(
+              onWillPop: () async {
+                print("onWillPop - search area");
+                // Intercepts "back" action by user and
+                // "add" an extra layer if the user is typing in the search bars
+                if (startAddressFocusNode.hasFocus |
+                destinationAddressFocusNode.hasFocus) {
+                  FocusScope.of(context).unfocus();
+                  return false;
+                }
+                return true;
+              },
+              child: SafeArea(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10.0),
+                    //column below is for (1) container for search bars and (2) container for prediction results
+                    child: Column(
+                      children: [
+                        Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.white70,
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(20.0),
+                            ),
+                          ),
+                          width: width * 0.9,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                            //column below is for the two search bars + transit options
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                // const Text(
+                                //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
+                                //   style: TextStyle(fontSize: 20.0),
+                                // ),
+                                const SizedBox(height: 10),
+                                _textField(
+                                    label: 'Start',
+                                    hint: 'Choose starting point',
+                                    prefixIcon: const Icon(Icons.looks_one),
+                                    suffixIcon: IconButton(
+                                      icon: const Icon(Icons.my_location),
+                                      onPressed: () {
+                                        startAddressController.text = _currentAddress;
+                                        _startAddress = _currentAddress;
+                                      },
+                                    ),
+                                    controller: startAddressController,
+                                    focusNode: startAddressFocusNode,
+                                    width: width,
+                                    onChanged: (String value) {
+                                      //// DONE: should probably call locationCallback something else, it does more than just deal with location
+                                      setState(() {
+                                        _startAddress = value;
+                                        ////DONE: should we be doing the above every time the user presses a new key?
+                                        searchPlaces(value);
+                                      });
+                                    }),
+                                const SizedBox(height: 10),
+                                _textField(
+                                    label: 'Destination',
+                                    hint: 'Choose destination',
+                                    prefixIcon: const Icon(Icons.looks_two),
+                                    controller: destinationAddressController,
+                                    focusNode: destinationAddressFocusNode,
+                                    width: width,
+                                    onChanged: (String value) {
+                                      setState(() {
+                                        _destinationAddress = value;
+                                        searchPlaces(value);
+                                      });
+                                    }),
+
+                                //spacer
+                                const SizedBox(height: 10),
+
+                                if (_startAddress != "" &&
+                                    _destinationAddress != "" &&
+                                    !startAddressFocusNode.hasFocus &&
+                                    !destinationAddressFocusNode.hasFocus)
+                                  //row containing transit options
+                                  Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                                    TextButton(
+                                      child: const Text(
+                                        "Walk",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blueGrey,
+                                        ),
+                                      ),
+                                      style: ButtonStyle(
+                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                          RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(18.0),
+                                            side: const BorderSide(
+                                              color: Colors.blueAccent,
+                                              width: 2,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () => {_updateTravelModeAndRoutes(TravelMode.walking)},
+                                    ),
+                                    TextButton(
+                                      child: const Text(
+                                        "Transit",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blueGrey,
+                                        ),
+                                      ),
+                                      style: ButtonStyle(
+                                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(18.0),
+                                        side: const BorderSide(
+                                          color: Colors.blueAccent,
+                                          width: 2,
+                                        ),
+                                      ))),
+                                      onPressed: () => {_updateTravelModeAndRoutes(TravelMode.transit)},
+                                    ),
+                                    TextButton(
+                                      child: const Text(
+                                        "Drive",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blueGrey,
+                                        ),
+                                      ),
+                                      style: ButtonStyle(
+                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                          RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(18.0),
+                                            side: const BorderSide(
+                                              color: Colors.blueAccent,
+                                              width: 2,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () => {_updateTravelModeAndRoutes(TravelMode.driving)},
+                                    ),
+                                    TextButton(
+                                      child: const Text(
+                                        "Cycle",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.blueGrey,
+                                        ),
+                                      ),
+                                      style: ButtonStyle(
+                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                          RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(18.0),
+                                            side: const BorderSide(
+                                              color: Colors.blueAccent,
+                                              width: 2,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () =>
+                                          {_updateTravelModeAndRoutes(TravelMode.bicycling)},
+                                    ),
+                                  ]),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      width: width * 0.9,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-                        //column below is for the two search bars + transit options
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            // const Text(
-                            //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
-                            //   style: TextStyle(fontSize: 20.0),
-                            // ),
-                            const SizedBox(height: 10),
-                            _textField(
-                                label: 'Start',
-                                hint: 'Choose starting point',
-                                prefixIcon: const Icon(Icons.looks_one),
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.my_location),
-                                  onPressed: () {
-                                    startAddressController.text = _currentAddress;
-                                    _startAddress = _currentAddress;
+
+                        //adds spacing between the search bars and results
+                        SizedBox(height: 10),
+
+                        //suggestions list (only show if there is a search):
+                        if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
+                          ListView.builder(
+                            shrinkWrap: true,
+                            itemBuilder: ((context, index) {
+                              return Card(
+                                elevation: 3,
+                                margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+                                color: Colors.black.withOpacity(0.7),
+                                child: ListTile(
+                                  title: Text(searchResults[index].description,
+                                      style: TextStyle(color: Colors.white)),
+                                  onTap: () async {
+                                    await setSelectedLocation(searchResults[index].placeId, true);
+                                    activeAddressController = null;
                                   },
                                 ),
-                                controller: startAddressController,
-                                focusNode: startAddressFocusNode,
-                                width: width,
-                                onChanged: (String value) {
-                                  //// DONE: should probably call locationCallback something else, it does more than just deal with location
-                                  setState(() {
-                                    _startAddress = value;
-                                    ////DONE: should we be doing the above every time the user presses a new key?
-                                    searchPlaces(value);
-                                  });
-                                }),
-                            const SizedBox(height: 10),
-                            _textField(
-                                label: 'Destination',
-                                hint: 'Choose destination',
-                                prefixIcon: const Icon(Icons.looks_two),
-                                controller: destinationAddressController,
-                                focusNode: destinationAddressFocusNode,
-                                width: width,
-                                onChanged: (String value) {
-                                  setState(() {
-                                    _destinationAddress = value;
-                                    searchPlaces(value);
-                                  });
-                                }),
-
-                            //spacer
-                            const SizedBox(height: 10),
-
-                            if (_startAddress != "" &&
-                                _destinationAddress != "" &&
-                                !startAddressFocusNode.hasFocus &&
-                                !destinationAddressFocusNode.hasFocus)
-                              //row containing transit options
-                              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                                TextButton(
-                                  child: const Text(
-                                    "Walk",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.blueGrey,
-                                    ),
-                                  ),
-                                  style: ButtonStyle(
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18.0),
-                                        side: const BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  onPressed: () => {_updateTravelModeAndRoutes(TravelMode.walking)},
-                                ),
-                                TextButton(
-                                  child: const Text(
-                                    "Transit",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.blueGrey,
-                                    ),
-                                  ),
-                                  style: ButtonStyle(
-                                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                          RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18.0),
-                                    side: const BorderSide(
-                                      color: Colors.blueAccent,
-                                      width: 2,
-                                    ),
-                                  ))),
-                                  onPressed: () => {_updateTravelModeAndRoutes(TravelMode.transit)},
-                                ),
-                                TextButton(
-                                  child: const Text(
-                                    "Drive",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.blueGrey,
-                                    ),
-                                  ),
-                                  style: ButtonStyle(
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18.0),
-                                        side: const BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  onPressed: () => {_updateTravelModeAndRoutes(TravelMode.driving)},
-                                ),
-                                TextButton(
-                                  child: const Text(
-                                    "Cycle",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.blueGrey,
-                                    ),
-                                  ),
-                                  style: ButtonStyle(
-                                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18.0),
-                                        side: const BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  onPressed: () =>
-                                      {_updateTravelModeAndRoutes(TravelMode.bicycling)},
-                                ),
-                              ]),
-                          ],
-                        ),
-                      ),
+                              );
+                            }),
+                            itemCount: min(3, searchResults.length),
+                            //TODO: do we need more than 3?
+                          ),
+                      ],
                     ),
+                  ),
+                ),
+              ),
+            ),
 
-                    //adds spacing between the search bars and results
-                    SizedBox(height: 10),
+            //centre button
+            SafeArea(
+              child: Align(
+                alignment: FractionalOffset.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: FloatingActionButton(
+                    heroTag: "centreBtn",
+                    onPressed: () => {moveCameraToCurrentLocation()},
+                    child: const Icon(Icons.my_location),
+                    ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
+                  ),
+                ),
+              ),
+            ),
 
-                    //suggestions list (only show if there is a search):
-                    if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
-                      ListView.builder(
-                        shrinkWrap: true,
-                        itemBuilder: ((context, index) {
-                          return Card(
-                            elevation: 3,
-                            margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
-                            color: Colors.black.withOpacity(0.7),
-                            child: ListTile(
-                              title: Text(searchResults[index].description,
-                                  style: TextStyle(color: Colors.white)),
-                              onTap: () async {
-                                await setSelectedLocation(searchResults[index].placeId, true);
-                                activeAddressController = null;
-                              },
-                            ),
-                          );
-                        }),
-                        itemCount: min(3, searchResults.length),
-                        //TODO: do we need more than 3?
+            //settings button
+            SafeArea(
+              child: Align(
+                alignment: FractionalOffset.bottomLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0, left: 10.0),
+                  child: FloatingActionButton(
+                    heroTag: "settingsBtn",
+                    backgroundColor: Colors.grey,
+                    mini: true,
+                    onPressed: () => {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Settings()),
                       ),
-                  ],
+                    },
+                    child: const Icon(Icons.settings),
+                    ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
+                  ),
                 ),
               ),
             ),
-          ),
-
-          //centre button
-          SafeArea(
-            child: Align(
-              alignment: FractionalOffset.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 10.0),
-                child: FloatingActionButton(
-                  heroTag: "centreBtn",
-                  onPressed: () => {moveCameraToCurrentLocation()},
-                  child: const Icon(Icons.my_location),
-                  ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
-                ),
-              ),
-            ),
-          ),
-
-          //settings button
-          SafeArea(
-            child: Align(
-              alignment: FractionalOffset.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 10.0, left: 10.0),
-                child: FloatingActionButton(
-                  heroTag: "settingsBtn",
-                  backgroundColor: Colors.grey,
-                  mini: true,
-                  onPressed: () => {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const Settings()),
-                    ),
-                  },
-                  child: const Icon(Icons.settings),
-                  ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
