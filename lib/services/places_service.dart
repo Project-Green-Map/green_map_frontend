@@ -27,12 +27,13 @@ class PlacesService {
       //var json = convert.jsonDecode(response.body);
 
       //!Comment to remove dummy data
-      var response =
-          await rootBundle.loadString('lib/dummy_data/places_request/places_request.json');
+      var response = await rootBundle
+          .loadString('lib/dummy_data/places_request/places_request.json');
       var json = convert.jsonDecode(response);
 
       var jsonResults = json['predictions'] as List;
-      List<PlaceSearch> result = jsonResults.map((place) => PlaceSearch.fromJson(place)).toList();
+      List<PlaceSearch> result =
+          jsonResults.map((place) => PlaceSearch.fromJson(place)).toList();
 
       cacheManager.addToCache(search, result);
       return result;
@@ -45,7 +46,12 @@ class PlacesService {
         'https://maps.googleapis.com/maps/api/place/details/json?key=$key&place_id=$placeId&fields=formatted_address,geometry');
     //example placeID: ChIJcWGw3Ytzj1QR7Ui7HnTz6Dg
     var response = await http.get(uri);
-    var json = convert.jsonDecode(response.body)['result'] as Map<String, dynamic>;
+    var json =
+        convert.jsonDecode(response.body)['result'] as Map<String, dynamic>;
     return Place.fromJson(json);
+  }
+
+  void flushSearchCache() {
+    cacheManager.flushCache();
   }
 }

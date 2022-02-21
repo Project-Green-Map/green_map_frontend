@@ -1,11 +1,69 @@
 import 'package:map/models/place_search.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-//*uses a least-recently-used replacement-policy cache to store the 50 most-recently searched terms.
-const cacheSize = 50;
+//*uses a least-recently-used write-through cache to store the 50 most-recently searched terms.
+const int maxCacheSize = 50;
+
+//TODO: have a different cache for commonly-entered places that shows when you first click the search bar
+
+class CacheEntry {
+  final String place;
+  final List<PlaceSearch> predictions;
+
+  CacheEntry({required this.place, required this.predictions});
+
+  factory CacheEntry.fromString(String str) {
+    List<String> splits = str.split('\n');
+    List<PlaceSearch> predicts = [];
+    for (int i = 1; splits[i].isNotEmpty; i += 2) {
+      predicts.add(PlaceSearch(placeId: splits[i], description: splits[i + 1]));
+    }
+
+    return CacheEntry(place: splits[0], predictions: predicts);
+  }
+
+  @override
+  String toString() {
+    //uses newlines as separators, as they can't be typed by user. one \n between each setting, two \ns marks the end
+    String str = place + '\n';
+    for (PlaceSearch ps in predictions) {
+      str += ps.placeId + '\n' + ps.description + '\n';
+    }
+    return str + '\n';
+  }
+}
 
 class CacheManager {
   Map<String, List<PlaceSearch>> cache = {};
   List<String> mostRecent = [];
+  late SharedPreferences prefs;
+
+  CacheManager() {
+    _onStart();
+  }
+
+  void _onStart() async {
+    //fill cache from local storage, if it exists
+    prefs = await SharedPreferences.getInstance();
+    //flushCache();
+    bool cacheExists = prefs.getBool('searchCacheExists') ?? false;
+
+    if (cacheExists) {
+      //load locally stored cache
+      List<String> cacheEntries = prefs.getStringList('searchCache') ?? [];
+      for (String str in cacheEntries) {
+        CacheEntry entry = CacheEntry.fromString(str);
+        cache[entry.place] = entry.predictions;
+      }
+      mostRecent = prefs.getStringList('searchMostRecent') ?? [];
+    } else {
+      //first run, so generate local settings
+      prefs.setBool('searchCacheExists', true);
+      prefs.setInt('searchCacheLength', 0);
+      prefs.setStringList('searchCache', []);
+      prefs.setStringList('searchMostRecent', []);
+    }
+  }
 
   List<PlaceSearch> getFromCache(String search) {
     List<PlaceSearch> result = [];
@@ -17,24 +75,44 @@ class CacheManager {
     return result;
   }
 
-  void addToCache(String search, List<PlaceSearch> places) {
+  Future<void> addToCache(String search, List<PlaceSearch> predicts) {
     _pushToFront(search);
     if (!cache.containsKey(search)) {
-      cache[search] = places;
-      while (cache.length > cacheSize) {
+      cache[search] = predicts;
+
+      while (cache.length > maxCacheSize) {
         //can realistically only happen once, but for initialisation errors it's safer to use while over if
-        cache.remove(mostRecent.last);
-        mostRecent.remove(mostRecent.last);
+        String last = mostRecent.last;
+        cache.remove(last);
+        mostRecent.remove(last);
       }
     }
-  }
-
-  void _pushToFront(String search) {
-    mostRecent.remove(search); //safe if it doesn't exist
-    mostRecent.insert(0, search);
+    _setLocalData();
+    return Future<void>(() {});
   }
 
   void flushCache() {
     cache = {};
+    mostRecent = [];
+    prefs.setStringList('searchCache', []);
+    prefs.setStringList('searchMostRecent', []);
+  }
+
+  void _pushToFront(String search) {
+    //only acts on app data
+    mostRecent.remove(search); //safe if it doesn't exist
+    mostRecent.insert(0, search);
+  }
+
+  List<String> _cacheAsString() {
+    return cache.entries
+        .map((e) => CacheEntry(place: e.key, predictions: e.value).toString())
+        .toList();
+  }
+
+  Future<void> _setLocalData() {
+    prefs.setStringList('searchCache', _cacheAsString());
+    prefs.setStringList('searchMostRecent', mostRecent);
+    return Future<void>(() {});
   }
 }
