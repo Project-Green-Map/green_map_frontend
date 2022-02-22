@@ -2,9 +2,9 @@ import 'package:map/models/place_search.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 //*uses a least-recently-used write-through cache to store the 50 most-recently searched terms.
-const int maxCacheSize = 200;
+const int maxCacheSize = 50;
 
-//might rewrite with CacheEntry extends MapEntry, but it works for now
+//TODO: have a different cache for commonly-entered places that shows when you first click the search bar
 
 class CacheEntry {
   final String place;
@@ -115,48 +115,4 @@ class CacheManager {
     prefs.setStringList('searchMostRecent', mostRecent);
     return Future<void>(() {});
   }
-
-  //call only on **complete** searches, not on all searches
-  Future<void> updateMostRecentSearches(PlaceSearch ps) {
-    List<String> recent = prefs.getStringList('mostRecentSearches') ?? [];
-    if (recent.contains(ps.description)) {
-      recent.remove(ps.description);
-      recent.remove(ps.placeId);
-      recent.insert(0, ps.description);
-      recent.insert(1, ps.placeId);
-    } else {
-      if (recent.length < 5) {
-        recent.insert(0, ps.description);
-        recent.insert(1, ps.placeId);
-      } else {
-        recent.removeLast();
-        recent.removeLast();
-        recent.insert(0, ps.description);
-        recent.insert(1, ps.placeId);
-      }
-    }
-    prefs.setStringList('mostRecentSearches', recent);
-
-    return Future<void>(() {});
-  }
-
-  List<PlaceSearch> getMostRecentSearches() {
-    List<String> recent = prefs.getStringList('mostRecentSearches') ?? [];
-    List<PlaceSearch> psList = [];
-    for (int i = 0; i < recent.length / 2; i++) {
-      psList.add(PlaceSearch(description: recent[i * 2], placeId: recent[i * 2 + 1]));
-    }
-    return psList;
-  }
-
-  /*Map<String, List<PlaceSearch>> getMostRecentSearches() {
-    Map<String, List<PlaceSearch>> map = {};
-    List<String> recent = prefs.getStringList('mostRecentSearches') ?? [];
-    for (String str in recent) {
-      CacheEntry ce = CacheEntry.fromString(str);
-      map[ce.place] = ce.predictions;
-    }
-
-    return map;
-  }*/
 }

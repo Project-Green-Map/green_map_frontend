@@ -1,7 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:map/MyApp.dart';
+import 'package:map/models/route_info.dart';
 import 'package:map/services/api_manager.dart';
 import 'dart:convert' as convert;
+import 'dart:io';
 import 'package:http/http.dart' as http;
+
+
 
 class RoutingService {
   // final polylinePoints = PolylinePoints();
@@ -14,32 +21,125 @@ class RoutingService {
     TravelMode.walking: "walking",
   };
 
-  Future<List<String>> getMultipleEncodedRoutesFromPlaceId(
-      startPlaceId, destinationPlaceId, travelMode, val) async {
+  // Future<PolylineResult> getRouteFromCoordinates_debug(
+  //     startLatitude,
+  //     startLongitude,
+  //     destinationLatitude,
+  //     destinationLongitude,
+  //     travelMode) async {
+  //   print("getRouteFromCoordinates_debug() called");
+  //
+  //   String? travelModeString = travelModeToString[travelMode];
+  //   travelModeString ??= "walking"; // set if null
+  //
+  //   Uri uri = Uri.parse(
+  //       "https://us-central1-gifted-pillar-339221.cloudfunctions.net/api-channel-dev?"
+  //       "origin=$startLatitude,$startLongitude"
+  //       "&destination=$destinationLatitude,$destinationLongitude"
+  //       "&mode=$travelModeString");
+  //
+  //   return decodeRouteURI(uri);
+  // }
+
+  // Future<PolylineResult> getRouteFromPlaceId_debug(
+  //     startPlaceId, destinationPlaceId, travelMode) async {
+  //   print("getRouteFromPlaceId_debug() called");
+  //
+  //   String? travelModeString = travelModeToString[travelMode];
+  //   travelModeString ??= "walking"; // set if null
+  //
+  //   Uri uri = Uri.parse(
+  //       "https://us-central1-gifted-pillar-339221.cloudfunctions.net/api-channel-dev?"
+  //       "origin=place_id:$startPlaceId"
+  //       "&destination=place_id:$destinationPlaceId"
+  //       "&mode=$travelModeString");
+  //
+  //   print(uri);
+  //   return decodeRouteURI(uri);
+  // }
+
+
+  Future<Map<String, RouteInfo>> getMultipleEncodedRoutesFromPlaceId(
+      startPlaceId, destinationPlaceId, travelMode, num) async {
     print("getMultipleRouteFromPlaceId() called");
 
     String? travelModeString = travelModeToString[travelMode];
 
-    Uri uri =
-        Uri.parse("https://us-central1-gifted-pillar-339221.cloudfunctions.net/api-channel-dev?"
-            "origin=place_id:$startPlaceId"
-            "&destination=place_id:$destinationPlaceId"
-            "&mode=$travelModeString");
+    Uri uri = Uri.parse(
+        "https://us-central1-gifted-pillar-339221.cloudfunctions.net/api-channel-dev?"
+        "origin=place_id:$startPlaceId"
+        "&destination=place_id:$destinationPlaceId"
+        "&mode=$travelModeString");
+
+    print(uri);
 
     http.Response encodedString = await http.get(uri);
     String response = encodedString.body;
     var json = convert.jsonDecode(response);
 
-    List<String> encodedRoutes = [];
+    Map<String, RouteInfo> encodedRoutes = {};
+    // List<String> encodedRoutes = [];
     int totalRouteNum = json['routes'].length;
-    for (int i = 0; i < val; i++) {
-      if (i == totalRouteNum) {
+    for(int i = 0; i < num; i ++){
+      if(i == totalRouteNum){
         print("All routes have been retrieved");
         break;
       }
       String encodedRoute = json['routes'][i]['overview_polyline']['points'];
-      encodedRoutes.add(encodedRoute);
+      RouteInfo routeInfo = RouteInfo.fromJson(json['routes'][i]);
+      encodedRoutes[encodedRoute] = routeInfo;
     }
     return encodedRoutes;
   }
+
+
+  // Future<PolylineResult> decodeRouteURI(Uri uri) async {
+  //   // print("http get");
+  //   http.Response encodedString = await http.get(uri);
+  //   String response = encodedString.body;
+  //   // print("uri converted to string");
+  //
+  //   // print(response);
+  //
+  //   var json = convert.jsonDecode(response);
+  //
+  //   // print("json data parsed");
+  //   String encodedRoutes = json['routes'][0]['overview_polyline']['points'];
+  //
+  //   List<PointLatLng> _points = polylinePoints.decodePolyline(encodedRoutes);
+  //   PolylineResult result = PolylineResult(
+  //     errorMessage: '',
+  //     status: 'OK',
+  //     points: _points,
+  //   );
+  //   return result;
+  // }
+
+  // Future<PolylineResult> getRouteFromCoordinates(startLatitude, startLongitude,
+  //     destinationLatitude, destinationLongitude, travelMode) async {
+  //   PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+  //     apiManager.getKey(),
+  //     PointLatLng(startLatitude, startLongitude),
+  //     PointLatLng(destinationLatitude, destinationLongitude),
+  //     travelMode: travelMode,
+  //   );
+  //
+  //   /*
+  //   not-quite-finished method for storing the .json of a request into /dummy_data/polyline/
+  //
+  //   List<List<double>> points =
+  //       result.points.map((latlong) => [latlong.latitude, latlong.longitude]).toList();
+  //
+  //   Map<String, dynamic> resultContent = <String, dynamic>{
+  //     "errorMessage": result.errorMessage,
+  //     "status": result.status,
+  //     "points": points,
+  //   };
+  //
+  //   final Directory directory = await getApplicationDocumentsDirectory();
+  //   final File file = File('lib/dummy_data/polyline/polyline.json');
+  //   await file.writeAsString(convert.jsonEncode(resultContent));*/
+  //
+  //   return result;
+  // }
 }
