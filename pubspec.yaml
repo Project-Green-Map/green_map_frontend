@@ -66,6 +66,7 @@ flutter:
   assets:
     - .env
     - lib/dummy_data/
+    - lib/dummy_data/vehicle_information/
     - lib/dummy_data/places_request/
   #  - lib/dummy_data/polyline/
 

@@ -4,7 +4,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:map/MyApp.dart';
 import 'package:map/services/api_manager.dart';
 import 'dart:convert' as convert;
-import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class RoutingService {
@@ -57,7 +56,8 @@ class RoutingService {
 
 
   Future<List<String>> getMultipleEncodedRoutesFromPlaceId(
-      startPlaceId, destinationPlaceId, travelMode, num) async {
+      startPlaceId, destinationPlaceId, travelMode, num,
+      {String vehicleInfo = ""}) async {
     print("getMultipleRouteFromPlaceId() called");
 
     String? travelModeString = travelModeToString[travelMode];
@@ -68,7 +68,9 @@ class RoutingService {
         "&destination=place_id:$destinationPlaceId"
         "&mode=$travelModeString");
 
-    http.Response encodedString = await http.get(uri);
+    http.Response encodedString = await http.post(uri,
+        headers: <String, String> {"Content-Type": "application/json"},
+        body: vehicleInfo);
     String response = encodedString.body;
     var json = convert.jsonDecode(response);
 
@@ -92,7 +94,7 @@ class RoutingService {
   //   // print("uri converted to string");
   //
   //   // print(response);
-  //
+  //:
   //   var json = convert.jsonDecode(response);
   //
   //   // print("json data parsed");

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -10,6 +11,7 @@ import 'package:map/services/routing_service.dart';
 import 'package:map/settings.dart';
 
 import 'dart:math' show cos, sqrt, asin, min;
+import 'dart:convert' as convert; // package for converting between file types
 
 import './services/geolocator_service.dart';
 import './services/geocoding_service.dart';
@@ -262,10 +264,16 @@ class _MapViewState extends State<MapView> {
 
   // LatLng middlePoint;
 
+
   _createMultiplePolylines(startPlaceId, destinationPlaceId, travelMode, num) async {
     print("_createMultiplePolylines() called");
+
+    var vehicleInfoSample = await rootBundle
+        .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
+    print(vehicleInfoSample);
+
     List<String> encodedRoutes = await _routingService.getMultipleEncodedRoutesFromPlaceId(
-        startPlaceId, destinationPlaceId, travelMode, num);
+        startPlaceId, destinationPlaceId, travelMode, num, vehicleInfo: vehicleInfoSample);
     // Map<PolylineId, Polyline> polylines = await _routingService.getMultipleRouteFromPlaceId(
     //     startPlaceId, destinationPlaceId, travelMode, num);
 
