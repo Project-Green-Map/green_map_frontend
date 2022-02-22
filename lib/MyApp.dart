@@ -412,12 +412,15 @@ class _MapViewState extends State<MapView> {
 
   searchPlaces(String searchTerm) async {
     searchResults = (searchTerm.isEmpty)
-        ? []
+        ? _placesService.getRecentSearches()
         : await _placesService.getAutocomplete(searchTerm);
   }
 
-  setSelectedLocation(String placeId, bool moveCamera) async {
+  setSelectedLocation(
+      String placeId, String description, bool moveCamera) async {
     Place place = await _placesService.getPlace(placeId);
+    PlaceSearch placeSearch =
+        PlaceSearch(description: description, placeId: placeId);
 
     if (activeAddressController == null) {
       print("(WARN) activeAddressController null...");
@@ -453,6 +456,7 @@ class _MapViewState extends State<MapView> {
       });
     }
 
+    _placesService.newSearchMade(placeSearch);
     activeAddressController = null;
 
     if (moveCamera) {
@@ -715,7 +719,9 @@ class _MapViewState extends State<MapView> {
                                       style: TextStyle(color: Colors.white)),
                                   onTap: () async {
                                     await setSelectedLocation(
-                                        searchResults[index].placeId, true);
+                                        searchResults[index].placeId,
+                                        searchResults[index].description,
+                                        true);
                                     activeAddressController = null;
                                   },
                                 ),
