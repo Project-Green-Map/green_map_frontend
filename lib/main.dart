@@ -7,6 +7,6 @@ import './models/settings_notifiers.dart';
 void main() => runApp(
       ChangeNotifierProvider(
         create: (_) => SingleSetting(),
-        child: MyApp(),
+        child: const MyApp(),
       ),
     );

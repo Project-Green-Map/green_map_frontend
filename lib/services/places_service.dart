@@ -1,4 +1,3 @@
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert; // package for converting between file types
 import 'package:flutter/services.dart' show rootBundle;

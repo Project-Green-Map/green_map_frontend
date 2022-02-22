@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 //*uses a least-recently-used write-through cache to store the 50 most-recently searched terms.
 const int maxCacheSize = 200;
 
-//TODO: have a different cache for commonly-entered places that shows when you first click the search bar
 //might rewrite with CacheEntry extends MapEntry, but it works for now
 
 class CacheEntry {

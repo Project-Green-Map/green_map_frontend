@@ -1,5 +1,3 @@
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-
 //model of Google Places API's JSON response's Location field when finding location information
 class Location {
   final double lat;

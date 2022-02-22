@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart'; //only use for Position objects. add functionality via geolocator_service.dart
 import 'package:map/models/place.dart';
@@ -9,7 +8,7 @@ import 'package:map/services/places_service.dart';
 import 'package:map/services/routing_service.dart';
 import 'package:map/settings.dart';
 
-import 'dart:math' show cos, sqrt, asin, min;
+import 'dart:math' show min;
 
 import './services/geolocator_service.dart';
 import './services/geocoding_service.dart';
@@ -44,8 +43,8 @@ class _MapViewState extends State<MapView> {
 
   String _startAddress = '';
   String _destinationAddress = '';
-  LatLng _startPosition = LatLng(0, 0);
-  LatLng _destinationPosition = LatLng(0, 0);
+  LatLng _startPosition = const LatLng(0, 0);
+  LatLng _destinationPosition = const LatLng(0, 0);
   String _startPlaceId = '';
   String _destinationPlaceId = '';
 
@@ -69,7 +68,7 @@ class _MapViewState extends State<MapView> {
   final _routingService = RoutingService();
   final _placesService = PlacesService();
 
-  late TravelMode _travelMode = TravelMode.walking; // default to be walking
+  late TravelMode _travelMode = TravelMode.walking; //TODO: this never gets used?
 
   List<PlaceSearch> searchResults = [];
   final polylinePoints = PolylinePoints();
@@ -262,10 +261,10 @@ class _MapViewState extends State<MapView> {
 
   // LatLng middlePoint;
 
-  _createMultiplePolylines(startPlaceId, destinationPlaceId, travelMode, num) async {
+  _createMultiplePolylines(startPlaceId, destinationPlaceId, travelMode, val) async {
     print("_createMultiplePolylines() called");
     List<String> encodedRoutes = await _routingService.getMultipleEncodedRoutesFromPlaceId(
-        startPlaceId, destinationPlaceId, travelMode, num);
+        startPlaceId, destinationPlaceId, travelMode, val);
     // Map<PolylineId, Polyline> polylines = await _routingService.getMultipleRouteFromPlaceId(
     //     startPlaceId, destinationPlaceId, travelMode, num);
 
@@ -420,7 +419,7 @@ class _MapViewState extends State<MapView> {
         _startPosition = place.geometry.latLng;
         _startPlaceId = placeId;
         Marker marker = Marker(
-          markerId: MarkerId('start'),
+          markerId: const MarkerId('start'),
           position: _startPosition,
         );
         _markers.remove(marker.markerId);
@@ -434,7 +433,7 @@ class _MapViewState extends State<MapView> {
         _destinationPosition = place.geometry.latLng;
         _destinationPlaceId = placeId;
         Marker marker = Marker(
-          markerId: MarkerId('dest'),
+          markerId: const MarkerId('dest'),
           position: _destinationPosition,
         );
         _markers.remove(marker.markerId);
@@ -663,7 +662,7 @@ class _MapViewState extends State<MapView> {
                         ),
 
                         //adds spacing between the search bars and results
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
 
                         //suggestions list (only show if there is a search):
                         if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
@@ -676,7 +675,7 @@ class _MapViewState extends State<MapView> {
                                 color: Colors.black.withOpacity(0.7),
                                 child: ListTile(
                                   title: Text(searchResults[index].description,
-                                      style: TextStyle(color: Colors.white)),
+                                      style: const TextStyle(color: Colors.white)),
                                   onTap: () async {
                                     await setSelectedLocation(searchResults[index].placeId,
                                         searchResults[index].description, true);
