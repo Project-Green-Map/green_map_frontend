@@ -2,7 +2,7 @@ import 'package:map/models/place_search.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 //*uses a least-recently-used write-through cache to store the 50 most-recently searched terms.
-const int maxCacheSize = 50;
+const int maxCacheSize = 200;
 
 //TODO: have a different cache for commonly-entered places that shows when you first click the search bar
 //might rewrite with CacheEntry extends MapEntry, but it works for now
@@ -144,7 +144,7 @@ class CacheManager {
   List<PlaceSearch> getMostRecentSearches() {
     List<String> recent = prefs.getStringList('mostRecentSearches') ?? [];
     List<PlaceSearch> psList = [];
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < recent.length / 2; i++) {
       psList.add(PlaceSearch(description: recent[i * 2], placeId: recent[i * 2 + 1]));
     }
     return psList;
