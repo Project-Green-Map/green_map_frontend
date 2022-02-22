@@ -1,4 +1,3 @@
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert; // package for converting between file types
 import 'package:flutter/services.dart' show rootBundle;
@@ -36,6 +35,7 @@ class PlacesService {
           jsonResults.map((place) => PlaceSearch.fromJson(place)).toList();
 
       cacheManager.addToCache(search, result);
+
       return result;
     }
   }
@@ -46,9 +46,17 @@ class PlacesService {
         'https://maps.googleapis.com/maps/api/place/details/json?key=$key&place_id=$placeId&fields=formatted_address,geometry');
     //example placeID: ChIJcWGw3Ytzj1QR7Ui7HnTz6Dg
     var response = await http.get(uri);
-    var json =
-        convert.jsonDecode(response.body)['result'] as Map<String, dynamic>;
+    var json = convert.jsonDecode(response.body)['result'] as Map<String, dynamic>;
     return Place.fromJson(json);
+  }
+
+  //call only on **complete** searches
+  void newSearchMade(PlaceSearch ps) {
+    cacheManager.updateMostRecentSearches(ps);
+  }
+
+  List<PlaceSearch> getRecentSearches() {
+    return cacheManager.getMostRecentSearches();
   }
 
   void flushSearchCache() {

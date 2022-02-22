@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
-import 'MyApp.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(MyApp());
+import 'MyApp.dart';
+import './models/settings_notifiers.dart';
+
+void main() => runApp(
+      ChangeNotifierProvider(
+        create: (_) => SingleSetting(),
+        child: const MyApp(),
+      ),
+    );
