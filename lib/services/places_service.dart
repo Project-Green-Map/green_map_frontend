@@ -32,7 +32,7 @@ class PlacesService {
 
       var jsonResults = json['predictions'] as List;
       List<PlaceSearch> result =
-          jsonResults.map((place) => PlaceSearch.fromJson(place)).toList();
+      jsonResults.map((place) => PlaceSearch.fromJson(place)).toList();
 
       cacheManager.addToCache(search, result);
 

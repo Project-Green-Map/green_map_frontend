@@ -5,7 +5,6 @@ import 'package:map/MyApp.dart';
 import 'package:map/models/route_info.dart';
 import 'package:map/services/api_manager.dart';
 import 'dart:convert' as convert;
-import 'dart:io';
 import 'package:http/http.dart' as http;
 
 
@@ -22,7 +21,8 @@ class RoutingService {
   };
 
   Future<Map<String, RouteInfo>> getMultipleEncodedRoutesFromPlaceId(
-      startPlaceId, destinationPlaceId, travelMode, val) async {
+      startPlaceId, destinationPlaceId, travelMode, val,
+      {String vehicleInfo = ""}) async {
     print("getMultipleRouteFromPlaceId() called");
 
     String? travelModeString = travelModeToString[travelMode];
@@ -35,7 +35,9 @@ class RoutingService {
 
     print(uri);
 
-    http.Response encodedString = await http.get(uri);
+    http.Response encodedString = await http.post(uri,
+        headers: <String, String> {"Content-Type": "application/json"},
+        body: vehicleInfo);
     String response = encodedString.body;
     var json = convert.jsonDecode(response);
 

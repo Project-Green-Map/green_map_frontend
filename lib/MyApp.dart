@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -281,11 +282,16 @@ class _MapViewState extends State<MapView> {
   _createMultiplePolylines(startPlaceId, destinationPlaceId, travelMode, val) async {
     print("_createMultiplePolylines() called");
 
+    var vehicleInfoSample = await rootBundle
+        .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
+    print(vehicleInfoSample);
+
     Map<String, RouteInfo> encodedRoutes = await _routingService.getMultipleEncodedRoutesFromPlaceId(
-        startPlaceId, destinationPlaceId, travelMode, val);
+        startPlaceId, destinationPlaceId, travelMode, val, vehicleInfo: vehicleInfoSample);
     // List<String> encodedRoutes =
     //     await _routingService.getMultipleEncodedRoutesFromPlaceId(
     //         startPlaceId, destinationPlaceId, travelMode, val);
+
     // Map<PolylineId, Polyline> polylines = await _routingService.getMultipleRouteFromPlaceId(
     //     startPlaceId, destinationPlaceId, travelMode, num);
 
