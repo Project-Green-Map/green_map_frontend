@@ -50,7 +50,7 @@ class RoutingService {
         break;
       }
       String encodedRoute = json['routes'][i]['overview_polyline']['points'];
-      RouteInfo routeInfo = RouteInfo.fromJson(json['routes'][i]);
+      RouteInfo routeInfo = RouteInfo.fromJson(json['routes'][i], json['carbon'][i]);
       encodedRoutes[encodedRoute] = routeInfo;
     }
     return encodedRoutes;

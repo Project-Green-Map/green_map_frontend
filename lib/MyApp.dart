@@ -387,7 +387,7 @@ class _MapViewState extends State<MapView> {
       middlePoint ??= _startPosition;
 
       BitmapDescriptor bitmapDescriptor =
-          await createCustomMarkerBitmap(routeInfo[i].distanceText + "\n" + routeInfo[i].timeText);
+          await createCustomMarkerBitmap(routeInfo[i].distanceText + "\n" + routeInfo[i].timeText + "\n" + routeInfo[i].carbonText);
       MarkerId markerId = MarkerId(polylineId.value);
       Marker marker = Marker(
         markerId: markerId,
