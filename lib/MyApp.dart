@@ -318,16 +318,15 @@ class _MapViewState extends State<MapView> {
     } else {
       print("Failed to create polyline from polylineResult");
     }
-    Color routeColor = id == 0 ? Colors.red : Colors.orange;
     PolylineId polylineId = PolylineId('route_$id');
     return Polyline(
       width: 5,
       polylineId: polylineId,
       consumeTapEvents: true,
-      color: Colors.grey,
+      color: id == 0 ? Colors.red : Colors.grey,
       points: polylineCoordinates,
       jointType: JointType.round,
-      zIndex: 0,
+      zIndex: id == 0 ? 1 : 0,
       onTap: () => _handlePolylineTap(polylineId),
       // patterns: [PatternItem.dash(10), PatternItem.gap(5)],
     );
@@ -399,7 +398,7 @@ class _MapViewState extends State<MapView> {
         markerId: markerId,
         position: middlePoint,
         icon: bitmapDescriptor,
-        visible: false,
+        visible: i == 0 ? true : false,
         // icon: customIcon,
       );
 
