@@ -267,6 +267,12 @@ class _MapViewState extends State<MapView> {
       _travelMode = travelMode;
       _polylines.clear();
       // polylineCoordinates.clear();
+      for(int i = 0; i < _routeNum; i ++){
+        MarkerId tmpId = MarkerId("route_$i");
+        if(_markers.containsKey(tmpId)){
+          _markers.remove(tmpId);
+        }
+      }
     });
     await _createMultiplePolylines(_startPlaceId, _destinationPlaceId, travelMode, _routeNum);
     // await _createPolylines_debug(_startPosition.latitude, _startPosition.longitude,
