@@ -69,6 +69,7 @@ flutter:
     - lib/dummy_data/vehicle_information/
     - lib/dummy_data/places_request/
   #  - lib/dummy_data/polyline/
+    - lib/assets/images/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -85,6 +86,12 @@ flutter:
 
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/assets-and-images/#from-packages
+
+  fonts:
+    - family: Quicksand
+      fonts:
+        - asset: lib/assets/fonts/Quicksand-Medium.ttf
+          weight: 500
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a

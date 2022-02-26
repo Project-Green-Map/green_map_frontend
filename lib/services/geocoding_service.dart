@@ -26,7 +26,7 @@ class GeocodingService {
     String response = encodedString.body;
 
     var json = convert.jsonDecode(response);
-    String placeId = json['results'][0]['place_id'];
+    String placeId = json['results'][0]['place_id']; //TODO: handle results being empty
     return placeId;
   }
 }

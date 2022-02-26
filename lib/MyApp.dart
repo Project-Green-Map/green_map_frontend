@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart'; //only use for Position objects. add functionality via geolocator_service.dart
+import 'package:map/carbonStats.dart';
 import 'package:map/models/place.dart';
 import 'package:map/models/place_search.dart';
 import 'package:map/services/places_service.dart';
@@ -269,6 +270,12 @@ class _MapViewState extends State<MapView> {
       _travelMode = travelMode;
       _polylines.clear();
       // polylineCoordinates.clear();
+      for(int i = 0; i < _routeNum; i ++){
+        MarkerId tmpId = MarkerId("route_$i");
+        if(_markers.containsKey(tmpId)){
+          _markers.remove(tmpId);
+        }
+      }
     });
     await _createMultiplePolylines(_startPlaceId, _destinationPlaceId, travelMode, _routeNum);
     // await _createPolylines_debug(_startPosition.latitude, _startPosition.longitude,
@@ -315,16 +322,15 @@ class _MapViewState extends State<MapView> {
     } else {
       print("Failed to create polyline from polylineResult");
     }
-    Color routeColor = id == 0 ? Colors.red : Colors.orange;
     PolylineId polylineId = PolylineId('route_$id');
     return Polyline(
       width: 5,
       polylineId: polylineId,
       consumeTapEvents: true,
-      color: Colors.grey,
+      color: id == 0 ? Colors.red : Colors.grey,
       points: polylineCoordinates,
       jointType: JointType.round,
-      zIndex: 0,
+      zIndex: id == 0 ? 1 : 0,
       onTap: () => _handlePolylineTap(polylineId),
       // patterns: [PatternItem.dash(10), PatternItem.gap(5)],
     );
@@ -391,13 +397,13 @@ class _MapViewState extends State<MapView> {
       middlePoint ??= _startPosition;
 
       BitmapDescriptor bitmapDescriptor =
-          await createCustomMarkerBitmap(routeInfo[i].distanceText + "\n" + routeInfo[i].timeText);
+          await createCustomMarkerBitmap(routeInfo[i].distanceText + "\n" + routeInfo[i].timeText + "\n" + routeInfo[i].carbonText);
       MarkerId markerId = MarkerId(polylineId.value);
       Marker marker = Marker(
         markerId: markerId,
         position: middlePoint,
         icon: bitmapDescriptor,
-        visible: false,
+        visible: i == 0 ? true : false,
         // icon: customIcon,
       );
 
@@ -827,11 +833,12 @@ class _MapViewState extends State<MapView> {
             //centre button
             SafeArea(
               child: Align(
-                alignment: FractionalOffset.bottomCenter,
+                alignment: FractionalOffset.bottomRight,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
+                  padding: const EdgeInsets.only(bottom: 100.0, right: 7.0),
                   child: FloatingActionButton(
                     heroTag: "centreBtn",
+                    mini: true,
                     onPressed: () => {moveCameraToCurrentLocation()},
                     child: const Icon(Icons.my_location),
                     ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
@@ -857,7 +864,27 @@ class _MapViewState extends State<MapView> {
                       ),
                     },
                     child: const Icon(Icons.settings),
-                    ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
+                  ),
+                ),
+              ),
+            ),
+
+            //carbonSaved button
+            SafeArea(
+              child: Align(
+                alignment: FractionalOffset.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: FloatingActionButton(
+                    heroTag: "carbonSavedBtn",
+                    backgroundColor: Colors.lightGreen,
+                    onPressed: () => {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => CarbonStats()),
+                      ),
+                    },
+                    child: const Icon(Icons.eco),
                   ),
                 ),
               ),
