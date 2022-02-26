@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SingleSetting extends ChangeNotifier {
-  String _distanceUnits = 'miles';
+  int _distanceUnits = 0;
   late SharedPreferences _pref;
 
   _initPrefs() async {
@@ -11,22 +11,22 @@ class SingleSetting extends ChangeNotifier {
 
   _loadPrefs() async {
     await _initPrefs();
-    _distanceUnits = _pref.getString('distanceUnit') ?? 'miles';
+    _distanceUnits = _pref.getInt('distanceUnit') ?? 0;
     notifyListeners();
   }
 
   _savePrefs() async {
     await _initPrefs();
-    _pref.setString("distanceUnit", _distanceUnits);
+    _pref.setInt("distanceUnit", _distanceUnits);
   }
 
   SingleSetting() {
     _loadPrefs();
   }
 
-  String get distanceUnit => _distanceUnits;
+  int get distanceUnit => _distanceUnits;
 
-  updateDistanceUnit(String value) {
+  updateDistanceUnit(int value) {
     _distanceUnits = value;
     _savePrefs();
     notifyListeners();

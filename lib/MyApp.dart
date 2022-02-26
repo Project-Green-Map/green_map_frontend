@@ -12,13 +12,14 @@ import 'package:map/models/place.dart';
 import 'package:map/models/place_search.dart';
 import 'package:map/services/places_service.dart';
 import 'package:map/services/routing_service.dart';
-import 'package:map/settings.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 import 'dart:math' show min;
 
 import './services/geolocator_service.dart';
 import './services/geocoding_service.dart';
 import 'models/route_info.dart';
+import 'settings.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -92,6 +93,8 @@ class _MapViewState extends State<MapView> {
   Map<PolylineId, Polyline> _polylines = {};
   Map<PolylineId, RouteInfo> _routeInfo = {};
 
+  int _distanceUnits = 0;
+
   _MapViewState() {
     startAddressFocusNode.addListener(() {
       if (startAddressFocusNode.hasFocus) {
@@ -162,8 +165,7 @@ class _MapViewState extends State<MapView> {
     super.initState();
 
     // make sure to initialize before map loading
-    BitmapDescriptor.fromAssetImage(
-            ImageConfiguration(size: Size(4, 4)), 'assets/images/car.png')
+    BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(4, 4)), 'assets/images/car.png')
         .then((d) {
       customIcon = d;
     });
@@ -286,8 +288,9 @@ class _MapViewState extends State<MapView> {
         .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
     print(vehicleInfoSample);
 
-    Map<String, RouteInfo> encodedRoutes = await _routingService.getMultipleEncodedRoutesFromPlaceId(
-        startPlaceId, destinationPlaceId, travelMode, val, vehicleInfo: vehicleInfoSample);
+    Map<String, RouteInfo> encodedRoutes = await _routingService
+        .getMultipleEncodedRoutesFromPlaceId(startPlaceId, destinationPlaceId, travelMode, val,
+            vehicleInfo: vehicleInfoSample);
     // List<String> encodedRoutes =
     //     await _routingService.getMultipleEncodedRoutesFromPlaceId(
     //         startPlaceId, destinationPlaceId, travelMode, val);
@@ -358,32 +361,33 @@ class _MapViewState extends State<MapView> {
       ..style = PaintingStyle.fill;
 
     tp.layout();
-    c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, tp.width.toInt() + 40, tp.height.toInt() + 20), const Radius.circular(15.0)),backgroundPaint);
+    c.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, tp.width.toInt() + 40, tp.height.toInt() + 20),
+            const Radius.circular(15.0)),
+        backgroundPaint);
     tp.paint(c, const Offset(20.0, 10.0));
 
     Picture p = recorder.endRecording();
-    ByteData? pngBytes =
-        await (await p.toImage(tp.width.toInt() + 40, tp.height.toInt() + 20))
-            .toByteData(format: ImageByteFormat.png);
+    ByteData? pngBytes = await (await p.toImage(tp.width.toInt() + 40, tp.height.toInt() + 20))
+        .toByteData(format: ImageByteFormat.png);
 
     Uint8List data = Uint8List.view((pngBytes?.buffer)!);
 
     return BitmapDescriptor.fromBytes(data);
   }
 
-
-  Future<void> createMarkersForEachRoute(Map<PolylineId, Polyline> polylineMap, List<RouteInfo> routeInfo) async {
+  Future<void> createMarkersForEachRoute(
+      Map<PolylineId, Polyline> polylineMap, List<RouteInfo> routeInfo) async {
     print("createMarkersForEachRoute() called");
 
     // Map<PolylineId, Marker> markersMap = {};
-    for(int i = 0; i < routeInfo.length; i ++){
+    for (int i = 0; i < routeInfo.length; i++) {
       PolylineId polylineId = PolylineId("route_$i");
-    //
-    // }
-    // for (PolylineId polylineId in polylineMap.keys) {
+      //
+      // }
+      // for (PolylineId polylineId in polylineMap.keys) {
       int? length = polylineMap[polylineId]?.points.length;
-      LatLng? middlePoint =
-          polylineMap[polylineId]?.points[(length! / 3).floor()];
+      LatLng? middlePoint = polylineMap[polylineId]?.points[(length! / 3).floor()];
       middlePoint ??= _startPosition;
 
       BitmapDescriptor bitmapDescriptor =
@@ -404,8 +408,7 @@ class _MapViewState extends State<MapView> {
     print("markers created");
   }
 
-  Future<Map<PolylineId, Polyline>> decodePolylines(
-      List<String> encodedRoutes) async {
+  Future<Map<PolylineId, Polyline>> decodePolylines(List<String> encodedRoutes) async {
     print("decodePolylines() called");
 
     Map<PolylineId, Polyline> routes = <PolylineId, Polyline>{};
@@ -429,13 +432,15 @@ class _MapViewState extends State<MapView> {
       for (PolylineId id in _polylines.keys) {
         MarkerId markerId = MarkerId(id.value);
         if (polylineId == id) {
-          _polylines[id] = (_polylines[id]
-              ?.copyWith(colorParam: Colors.red, zIndexParam: 1))!;
-          _markers[markerId] = (_markers[markerId]?.copyWith(visibleParam: true,))!;
+          _polylines[id] = (_polylines[id]?.copyWith(colorParam: Colors.red, zIndexParam: 1))!;
+          _markers[markerId] = (_markers[markerId]?.copyWith(
+            visibleParam: true,
+          ))!;
         } else {
-          _polylines[id] = (_polylines[id]
-              ?.copyWith(colorParam: Colors.grey, zIndexParam: 0))!;
-          _markers[markerId] = (_markers[markerId]?.copyWith(visibleParam: false,))!;
+          _polylines[id] = (_polylines[id]?.copyWith(colorParam: Colors.grey, zIndexParam: 0))!;
+          _markers[markerId] = (_markers[markerId]?.copyWith(
+            visibleParam: false,
+          ))!;
         }
       }
     });
@@ -564,6 +569,7 @@ class _MapViewState extends State<MapView> {
   Widget build(BuildContext context) {
     var height = MediaQuery.of(context).size.height;
     var width = MediaQuery.of(context).size.width;
+
     return GestureDetector(
       onTap: () {
         print("Detected tab.");
@@ -798,6 +804,19 @@ class _MapViewState extends State<MapView> {
                             itemCount: min(3, searchResults.length),
                             //TODO: do we need more than 3?
                           ),
+                        //TODO: checking if shared preferences work
+                        ValueChangeObserver(
+                            cacheKey: 'key-distance-units',
+                            defaultValue: 0,
+                            builder: (_, _distanceUnits, __) => Center(
+                                    child: Container(
+                                  margin: const EdgeInsets.all(10.0),
+                                  color: Colors.amber[600],
+                                  width: 48.0,
+                                  height: 48.0,
+                                  child:
+                                      Text(Settings.getValue('key-distance-units', 0).toString()),
+                                )))
                       ],
                     ),
                   ),
@@ -834,7 +853,7 @@ class _MapViewState extends State<MapView> {
                     onPressed: () => {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => Settings()),
+                        MaterialPageRoute(builder: (context) => SettingsPage()),
                       ),
                     },
                     child: const Icon(Icons.settings),
