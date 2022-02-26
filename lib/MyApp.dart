@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart'; //only use for Position objects. add functionality via geolocator_service.dart
+import 'package:map/carbonStats.dart';
 import 'package:map/models/place.dart';
 import 'package:map/models/place_search.dart';
 import 'package:map/services/places_service.dart';
@@ -162,8 +163,7 @@ class _MapViewState extends State<MapView> {
     super.initState();
 
     // make sure to initialize before map loading
-    BitmapDescriptor.fromAssetImage(
-            ImageConfiguration(size: Size(4, 4)), 'assets/images/car.png')
+    BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(4, 4)), 'assets/images/car.png')
         .then((d) {
       customIcon = d;
     });
@@ -292,8 +292,9 @@ class _MapViewState extends State<MapView> {
         .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
     print(vehicleInfoSample);
 
-    Map<String, RouteInfo> encodedRoutes = await _routingService.getMultipleEncodedRoutesFromPlaceId(
-        startPlaceId, destinationPlaceId, travelMode, val, vehicleInfo: vehicleInfoSample);
+    Map<String, RouteInfo> encodedRoutes = await _routingService
+        .getMultipleEncodedRoutesFromPlaceId(startPlaceId, destinationPlaceId, travelMode, val,
+            vehicleInfo: vehicleInfoSample);
     // List<String> encodedRoutes =
     //     await _routingService.getMultipleEncodedRoutesFromPlaceId(
     //         startPlaceId, destinationPlaceId, travelMode, val);
@@ -363,32 +364,33 @@ class _MapViewState extends State<MapView> {
       ..style = PaintingStyle.fill;
 
     tp.layout();
-    c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, tp.width.toInt() + 40, tp.height.toInt() + 20), const Radius.circular(15.0)),backgroundPaint);
+    c.drawRRect(
+        RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, tp.width.toInt() + 40, tp.height.toInt() + 20),
+            const Radius.circular(15.0)),
+        backgroundPaint);
     tp.paint(c, const Offset(20.0, 10.0));
 
     Picture p = recorder.endRecording();
-    ByteData? pngBytes =
-        await (await p.toImage(tp.width.toInt() + 40, tp.height.toInt() + 20))
-            .toByteData(format: ImageByteFormat.png);
+    ByteData? pngBytes = await (await p.toImage(tp.width.toInt() + 40, tp.height.toInt() + 20))
+        .toByteData(format: ImageByteFormat.png);
 
     Uint8List data = Uint8List.view((pngBytes?.buffer)!);
 
     return BitmapDescriptor.fromBytes(data);
   }
 
-
-  Future<void> createMarkersForEachRoute(Map<PolylineId, Polyline> polylineMap, List<RouteInfo> routeInfo) async {
+  Future<void> createMarkersForEachRoute(
+      Map<PolylineId, Polyline> polylineMap, List<RouteInfo> routeInfo) async {
     print("createMarkersForEachRoute() called");
 
     // Map<PolylineId, Marker> markersMap = {};
-    for(int i = 0; i < routeInfo.length; i ++){
+    for (int i = 0; i < routeInfo.length; i++) {
       PolylineId polylineId = PolylineId("route_$i");
-    //
-    // }
-    // for (PolylineId polylineId in polylineMap.keys) {
+      //
+      // }
+      // for (PolylineId polylineId in polylineMap.keys) {
       int? length = polylineMap[polylineId]?.points.length;
-      LatLng? middlePoint =
-          polylineMap[polylineId]?.points[(length! / 3).floor()];
+      LatLng? middlePoint = polylineMap[polylineId]?.points[(length! / 3).floor()];
       middlePoint ??= _startPosition;
 
       BitmapDescriptor bitmapDescriptor =
@@ -409,8 +411,7 @@ class _MapViewState extends State<MapView> {
     print("markers created");
   }
 
-  Future<Map<PolylineId, Polyline>> decodePolylines(
-      List<String> encodedRoutes) async {
+  Future<Map<PolylineId, Polyline>> decodePolylines(List<String> encodedRoutes) async {
     print("decodePolylines() called");
 
     Map<PolylineId, Polyline> routes = <PolylineId, Polyline>{};
@@ -434,13 +435,15 @@ class _MapViewState extends State<MapView> {
       for (PolylineId id in _polylines.keys) {
         MarkerId markerId = MarkerId(id.value);
         if (polylineId == id) {
-          _polylines[id] = (_polylines[id]
-              ?.copyWith(colorParam: Colors.red, zIndexParam: 1))!;
-          _markers[markerId] = (_markers[markerId]?.copyWith(visibleParam: true,))!;
+          _polylines[id] = (_polylines[id]?.copyWith(colorParam: Colors.red, zIndexParam: 1))!;
+          _markers[markerId] = (_markers[markerId]?.copyWith(
+            visibleParam: true,
+          ))!;
         } else {
-          _polylines[id] = (_polylines[id]
-              ?.copyWith(colorParam: Colors.grey, zIndexParam: 0))!;
-          _markers[markerId] = (_markers[markerId]?.copyWith(visibleParam: false,))!;
+          _polylines[id] = (_polylines[id]?.copyWith(colorParam: Colors.grey, zIndexParam: 0))!;
+          _markers[markerId] = (_markers[markerId]?.copyWith(
+            visibleParam: false,
+          ))!;
         }
       }
     });
@@ -813,11 +816,12 @@ class _MapViewState extends State<MapView> {
             //centre button
             SafeArea(
               child: Align(
-                alignment: FractionalOffset.bottomCenter,
+                alignment: FractionalOffset.bottomRight,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
+                  padding: const EdgeInsets.only(bottom: 100.0, right: 7.0),
                   child: FloatingActionButton(
                     heroTag: "centreBtn",
+                    mini: true,
                     onPressed: () => {moveCameraToCurrentLocation()},
                     child: const Icon(Icons.my_location),
                     ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
@@ -843,7 +847,27 @@ class _MapViewState extends State<MapView> {
                       ),
                     },
                     child: const Icon(Icons.settings),
-                    ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
+                  ),
+                ),
+              ),
+            ),
+
+            //carbonSaved button
+            SafeArea(
+              child: Align(
+                alignment: FractionalOffset.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: FloatingActionButton(
+                    heroTag: "carbonSavedBtn",
+                    backgroundColor: Colors.lightGreen,
+                    onPressed: () => {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => CarbonStats()),
+                      ),
+                    },
+                    child: const Icon(Icons.eco),
                   ),
                 ),
               ),
