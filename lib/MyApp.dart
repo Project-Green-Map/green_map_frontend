@@ -94,7 +94,7 @@ class _MapViewState extends State<MapView> {
   Map<PolylineId, Polyline> _polylines = {};
   Map<PolylineId, RouteInfo> _routeInfo = {};
 
-  int _distanceUnits = 0;
+  String _distanceUnits = 'km';
 
   _MapViewState() {
     startAddressFocusNode.addListener(() {
@@ -270,9 +270,9 @@ class _MapViewState extends State<MapView> {
       _travelMode = travelMode;
       _polylines.clear();
       // polylineCoordinates.clear();
-      for(int i = 0; i < _routeNum; i ++){
+      for (int i = 0; i < _routeNum; i++) {
         MarkerId tmpId = MarkerId("route_$i");
-        if(_markers.containsKey(tmpId)){
+        if (_markers.containsKey(tmpId)) {
           _markers.remove(tmpId);
         }
       }
@@ -396,8 +396,11 @@ class _MapViewState extends State<MapView> {
       LatLng? middlePoint = polylineMap[polylineId]?.points[(length! / 3).floor()];
       middlePoint ??= _startPosition;
 
-      BitmapDescriptor bitmapDescriptor =
-          await createCustomMarkerBitmap(routeInfo[i].distanceText + "\n" + routeInfo[i].timeText + "\n" + routeInfo[i].carbonText);
+      BitmapDescriptor bitmapDescriptor = await createCustomMarkerBitmap(routeInfo[i].distanceText +
+          "\n" +
+          routeInfo[i].timeText +
+          "\n" +
+          routeInfo[i].carbonText);
       MarkerId markerId = MarkerId(polylineId.value);
       Marker marker = Marker(
         markerId: markerId,
@@ -810,19 +813,18 @@ class _MapViewState extends State<MapView> {
                             itemCount: min(3, searchResults.length),
                             //TODO: do we need more than 3?
                           ),
-                        //TODO: checking if shared preferences work
-                        ValueChangeObserver(
-                            cacheKey: 'key-distance-units',
-                            defaultValue: 0,
+                        //TODO: how to display things based on the changes from settings
+                        /*ValueChangeObserver(
+                            cacheKey: 'key-distance',
+                            defaultValue: 'km',
                             builder: (_, _distanceUnits, __) => Center(
                                     child: Container(
                                   margin: const EdgeInsets.all(10.0),
                                   color: Colors.amber[600],
                                   width: 48.0,
                                   height: 48.0,
-                                  child:
-                                      Text(Settings.getValue('key-distance-units', 0).toString()),
-                                )))
+                                  child: Text(Settings.getValue('key-distance', 'km')),
+                                )))*/
                       ],
                     ),
                   ),

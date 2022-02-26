@@ -12,7 +12,7 @@ class Car {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  int _distanceUnits = 0;
+  String _distanceUnits = 'km';
   bool _drivingEabled = true;
   List<Car> _cars = [];
   Map<int, String> _carMAp = {};
@@ -40,12 +40,12 @@ class _SettingsPageState extends State<SettingsPage> {
         ));
   }
 
-  Widget buildDistanceUnits() => DropDownSettingsTile(
+  Widget buildDistanceUnits() => SimpleDropDownSettingsTile(
         title: 'Distance units',
-        settingKey: 'key-distance-units',
-        selected: _distanceUnits,
-        values: <int, String>{0: 'miles', 1: 'km'},
-        onChange: (int value) => {_distanceUnits = value},
+        settingKey: 'key-distance',
+        selected: 'km',
+        values: ['miles', 'km'],
+        onChange: (value) => {_distanceUnits = value},
       );
 
   /*Widget buildCars() => CheckboxSettingsTile(
