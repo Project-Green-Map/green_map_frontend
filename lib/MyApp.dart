@@ -15,7 +15,7 @@ import 'package:map/services/places_service.dart';
 import 'package:map/services/routing_service.dart';
 import 'package:map/settings.dart';
 
-import 'dart:math' show min;
+import 'dart:math' show max, min;
 
 import './services/geolocator_service.dart';
 import './services/geocoding_service.dart';
@@ -262,6 +262,24 @@ class _MapViewState extends State<MapView> {
     );
   }
 
+  resetCameraVisibleRegion() async{
+    // only called after startPlaceId and destionationPlaceId are set
+    if(_startPlaceId == "" || _destinationPlaceId == ""){
+      return;
+    }
+    LatLng southwest = LatLng(min(_startPosition.latitude, _destinationPosition.latitude),
+        min(_startPosition.longitude, _destinationPosition.longitude));
+    double diff = _startPosition.latitude - _destinationPosition.latitude;
+    if(diff < 0) {
+      diff *= -1;
+    }
+    LatLng northeast = LatLng(max(_startPosition.latitude, _destinationPosition.latitude) + diff * 0.5,
+        max(_startPosition.longitude, _destinationPosition.longitude));
+    LatLngBounds bound = LatLngBounds(southwest: southwest, northeast: northeast);
+    CameraUpdate update = CameraUpdate.newLatLngBounds(bound, 100);
+    mapController.animateCamera(update);
+  }
+
   _updateTravelModeAndRoutes(travelMode) async {
     setState(() {
       _travelMode = travelMode;
@@ -274,6 +292,7 @@ class _MapViewState extends State<MapView> {
         }
       }
     });
+    await resetCameraVisibleRegion();
     await _createMultiplePolylines(_startPlaceId, _destinationPlaceId, travelMode, _routeNum);
     // await _createPolylines_debug(_startPosition.latitude, _startPosition.longitude,
     //     _destinationPosition.latitude, _destinationPosition.longitude, travelMode);
@@ -641,7 +660,7 @@ class _MapViewState extends State<MapView> {
                                 //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
                                 //   style: TextStyle(fontSize: 20.0),
                                 // ),
-                                const SizedBox(height: 10),
+                                // const SizedBox(height: 10),
                                 _textField(
                                     label: 'Start',
                                     hint: 'Choose starting point',
@@ -680,7 +699,7 @@ class _MapViewState extends State<MapView> {
                                     }),
 
                                 //spacer
-                                const SizedBox(height: 10),
+                                // const SizedBox(height: 10),
 
                                 if (_startAddress != "" &&
                                     _destinationAddress != "" &&
