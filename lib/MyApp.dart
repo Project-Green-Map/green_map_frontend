@@ -61,7 +61,7 @@ class _MapViewState extends State<MapView> {
     zoom: 14,
   );
 
-  final int _routeNum = 3;
+  final int _routeNum = 5;
 
   final startAddressController = TextEditingController();
   final destinationAddressController = TextEditingController();
@@ -76,7 +76,7 @@ class _MapViewState extends State<MapView> {
   final _routingService = RoutingService();
   final _placesService = PlacesService();
 
-  late TravelMode _travelMode = TravelMode.walking; //TODO: this never gets used?
+  late TravelMode _travelMode = TravelMode.walking;
 
   List<PlaceSearch> searchResults = [];
   final polylinePoints = PolylinePoints();
@@ -121,7 +121,7 @@ class _MapViewState extends State<MapView> {
     required Function(String) onChanged,
   }) {
     return SizedBox(
-      width: width * 0.8,
+      width: width * 0.75,
       child: TextField(
         onChanged: onChanged,
         controller: controller,
@@ -292,6 +292,11 @@ class _MapViewState extends State<MapView> {
         }
       }
     });
+    Marker marker = Marker(
+      markerId: const MarkerId('dest'),
+      position: _destinationPosition,
+    );
+    _markers[marker.markerId] = marker;
     await resetCameraVisibleRegion();
     await _createMultiplePolylines(_startPlaceId, _destinationPlaceId, travelMode, _routeNum);
     // await _createPolylines_debug(_startPosition.latitude, _startPosition.longitude,
@@ -541,6 +546,7 @@ class _MapViewState extends State<MapView> {
         : await _placesService.getAutocomplete(searchTerm);
   }
 
+
   setSelectedLocation(String placeId, String description, bool moveCamera) async {
     Place place = await _placesService.getPlace(placeId);
     PlaceSearch placeSearch = PlaceSearch(description: description, placeId: placeId);
@@ -556,12 +562,12 @@ class _MapViewState extends State<MapView> {
         _startAddress = place.name;
         _startPosition = place.geometry.latLng;
         _startPlaceId = placeId;
-        Marker marker = Marker(
-          markerId: const MarkerId('start'),
-          position: _startPosition,
-        );
-        _markers.remove(marker.markerId);
-        _markers[marker.markerId] = marker;
+        // Marker marker = Marker(
+        //   markerId: const MarkerId('start'),
+        //   position: _startPosition,
+        // );
+        // _markers.remove(marker.markerId);
+        // _markers[marker.markerId] = marker;
       });
     } else if (activeAddressController == "dest") {
       destinationAddressController.text = place.name;
@@ -585,6 +591,65 @@ class _MapViewState extends State<MapView> {
     if (moveCamera) {
       moveCameraToPosition(place.geometry.latLng.latitude, place.geometry.latLng.longitude, 14);
     }
+  }
+
+  ElevatedButton makeTravelModeButton(TravelMode travelMode){
+    return ElevatedButton(
+      child: Text(
+        travelMode.name,
+        style: const TextStyle(
+          fontSize: 14,
+          // color: Colors.blueGrey,
+          color: Colors.white,
+        ),
+      ),
+
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.all<Color>(Colors.blueAccent.shade100),
+        overlayColor: MaterialStateProperty.resolveWith((states) {
+          return states.contains(MaterialState.pressed) ?
+              Colors.blueAccent.shade400 : null;
+        }),
+          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                // side: const BorderSide(
+                //   color: Colors.blueAccent,
+                //   width: 2,
+                // ),
+              ))),
+      onPressed: () {
+        _updateTravelModeAndRoutes(travelMode);
+        },
+    );
+  }
+
+  swapStartAndDestionation(){
+    setState(() async {
+      String tmpAddress = _startAddress;
+      _startAddress = _destinationAddress;
+      _destinationAddress = tmpAddress;
+
+      LatLng tmpPosition = _startPosition;
+      _startPosition = _destinationPosition;
+      _destinationPosition = tmpPosition;
+
+      String tmpPlaceId = _startPlaceId;
+      _startPlaceId = _destinationPlaceId;
+      _destinationPlaceId = tmpPlaceId;
+
+      String tmpDisplay = startAddressController.text;
+      startAddressController.text = destinationAddressController.text;
+      destinationAddressController.text = tmpDisplay;
+
+      Marker marker = Marker(
+        markerId: const MarkerId('dest'),
+        position: _destinationPosition,
+      );
+      _markers.remove(marker.markerId);
+      _markers[marker.markerId] = marker;
+      await _updateTravelModeAndRoutes(_travelMode);
+    });
   }
 
   @override
@@ -661,42 +726,58 @@ class _MapViewState extends State<MapView> {
                                 //   style: TextStyle(fontSize: 20.0),
                                 // ),
                                 // const SizedBox(height: 10),
-                                _textField(
-                                    label: 'Start',
-                                    hint: 'Choose starting point',
-                                    prefixIcon: const Icon(Icons.looks_one),
-                                    suffixIcon: IconButton(
-                                      icon: const Icon(Icons.my_location),
-                                      onPressed: () {
-                                        startAddressController.text = _currentAddress;
-                                        _startAddress = _currentAddress;
-                                      },
+                                Row(
+                                  children: <Widget> [
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        _textField(
+                                            label: 'Start',
+                                            hint: 'Choose starting point',
+                                            prefixIcon: const Icon(Icons.looks_one),
+                                            suffixIcon: IconButton(
+                                              icon: const Icon(Icons.my_location),
+                                              onPressed: () {
+                                                startAddressController.text = _currentAddress;
+                                                _startAddress = _currentAddress;
+                                              },
+                                            ),
+                                            controller: startAddressController,
+                                            focusNode: startAddressFocusNode,
+                                            width: width,
+                                            onChanged: (String value) {
+                                              //// DONE: should probably call locationCallback something else, it does more than just deal with location
+                                              setState(() {
+                                                _startAddress = value;
+                                                ////DONE: should we be doing the above every time the user presses a new key?
+                                                searchPlaces(value);
+                                              });
+                                            }),
+                                        const SizedBox(height: 10),
+                                        _textField(
+                                            label: 'Destination',
+                                            hint: 'Choose destination',
+                                            prefixIcon: const Icon(Icons.looks_two),
+                                            controller: destinationAddressController,
+                                            focusNode: destinationAddressFocusNode,
+                                            width: width,
+                                            onChanged: (String value) {
+                                              setState(() {
+                                                _destinationAddress = value;
+                                                searchPlaces(value);
+                                              });
+                                            }),
+                                      ],
                                     ),
-                                    controller: startAddressController,
-                                    focusNode: startAddressFocusNode,
-                                    width: width,
-                                    onChanged: (String value) {
-                                      //// DONE: should probably call locationCallback something else, it does more than just deal with location
-                                      setState(() {
-                                        _startAddress = value;
-                                        ////DONE: should we be doing the above every time the user presses a new key?
-                                        searchPlaces(value);
-                                      });
-                                    }),
-                                const SizedBox(height: 10),
-                                _textField(
-                                    label: 'Destination',
-                                    hint: 'Choose destination',
-                                    prefixIcon: const Icon(Icons.looks_two),
-                                    controller: destinationAddressController,
-                                    focusNode: destinationAddressFocusNode,
-                                    width: width,
-                                    onChanged: (String value) {
-                                      setState(() {
-                                        _destinationAddress = value;
-                                        searchPlaces(value);
-                                      });
-                                    }),
+                                    FloatingActionButton(
+                                      heroTag: "centreBtn",
+                                      mini: true,
+                                      onPressed: () => {swapStartAndDestionation()},
+                                      child: const Icon(Icons.change_circle),
+                                      ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
+                                    ),
+                                  ]
+                                ),
 
                                 //spacer
                                 // const SizedBox(height: 10),
@@ -707,92 +788,10 @@ class _MapViewState extends State<MapView> {
                                     !destinationAddressFocusNode.hasFocus)
                                   //row containing transit options
                                   Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                                    TextButton(
-                                      child: const Text(
-                                        "Walk",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.blueGrey,
-                                        ),
-                                      ),
-                                      style: ButtonStyle(
-                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                          RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(18.0),
-                                            side: const BorderSide(
-                                              color: Colors.blueAccent,
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () =>
-                                          {_updateTravelModeAndRoutes(TravelMode.walking)},
-                                    ),
-                                    TextButton(
-                                      child: const Text(
-                                        "Transit",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.blueGrey,
-                                        ),
-                                      ),
-                                      style: ButtonStyle(
-                                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                              RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18.0),
-                                        side: const BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2,
-                                        ),
-                                      ))),
-                                      onPressed: () =>
-                                          {_updateTravelModeAndRoutes(TravelMode.transit)},
-                                    ),
-                                    TextButton(
-                                      child: const Text(
-                                        "Drive",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.blueGrey,
-                                        ),
-                                      ),
-                                      style: ButtonStyle(
-                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                          RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(18.0),
-                                            side: const BorderSide(
-                                              color: Colors.blueAccent,
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () =>
-                                          {_updateTravelModeAndRoutes(TravelMode.driving)},
-                                    ),
-                                    TextButton(
-                                      child: const Text(
-                                        "Cycle",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.blueGrey,
-                                        ),
-                                      ),
-                                      style: ButtonStyle(
-                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                          RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(18.0),
-                                            side: const BorderSide(
-                                              color: Colors.blueAccent,
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () =>
-                                          {_updateTravelModeAndRoutes(TravelMode.bicycling)},
-                                    ),
+                                    makeTravelModeButton(TravelMode.walking),
+                                    makeTravelModeButton(TravelMode.transit),
+                                    makeTravelModeButton(TravelMode.driving),
+                                    makeTravelModeButton(TravelMode.bicycling)
                                   ]),
                               ],
                             ),
@@ -883,7 +882,7 @@ class _MapViewState extends State<MapView> {
                     onPressed: () => {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CarbonStats()),
+                        MaterialPageRoute(builder: (context) => const CarbonStats()),
                       ),
                     },
                     child: const Icon(Icons.eco),
