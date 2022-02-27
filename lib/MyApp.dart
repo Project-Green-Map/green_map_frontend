@@ -357,7 +357,7 @@ class _MapViewState extends State<MapView> {
       text: title,
       style: const TextStyle(
         color: Colors.white70,
-        fontSize: 30.0,
+        fontSize: 35.0,
         fontWeight: FontWeight.bold,
         // background: Paint()
         //   ..color = Colors.blue.shade300

@@ -4,7 +4,7 @@ class RouteInfo{
   // int distance;
   // int time;
   late String carbonText;
-  final double carbon;
+  final dynamic carbon;
 
   RouteInfo({
     required this.distanceText,
@@ -13,10 +13,10 @@ class RouteInfo{
     // required this.time,
     required this.carbon,
   }){
-    carbonText = carbon.toStringAsFixed(2) + " CO2e";
+    carbonText = carbon.toStringAsFixed(1) + " CO2e";
   }
 
-  factory RouteInfo.fromJson(Map<dynamic, dynamic> routesJson, double _carbon){
+  factory RouteInfo.fromJson(Map<dynamic, dynamic> routesJson, dynamic _carbon){
     String _distanceText = routesJson["legs"][0]["distance"]["text"];
     String _timeText = routesJson["legs"][0]["duration"]["text"];
 
