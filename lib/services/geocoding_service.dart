@@ -26,8 +26,7 @@ class GeocodingService {
     http.Response encodedString;
     try {
       encodedString = await http.get(uri);
-    }
-    catch(e){
+    } catch (e) {
       print(e);
       return null;
     }
@@ -37,8 +36,7 @@ class GeocodingService {
     String? placeId;
     try {
       placeId = json['results'][0]['place_id']; //TODO: handle results being empty
-    }
-    catch(e){
+    } catch (e) {
       print(e);
       return null;
     }

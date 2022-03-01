@@ -1,7 +1,7 @@
 import 'package:map/models/place_search.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-//*uses a least-recently-used write-through cache to store the 50 most-recently searched terms.
+//*uses a least-recently-used write-through cache to store the 200 most-recently searched terms.
 const int maxCacheSize = 200;
 
 //might rewrite with CacheEntry extends MapEntry, but it works for now
