@@ -177,12 +177,12 @@ class _MapViewState extends State<MapView> {
     print("startupLogic() called");
 
     await updateCurrentLocation();
-    String _placeIdTmp = await _geocodingService.getPlaceIdFromCoordinates(
+    String? _placeIdTmp = await _geocodingService.getPlaceIdFromCoordinates(
         _currentPosition.latitude, _currentPosition.longitude);
 
     setState(() {
       _startPosition = LatLng(_currentPosition.latitude, _currentPosition.longitude);
-      _startPlaceId = _placeIdTmp;
+      _startPlaceId = _placeIdTmp ?? "";
       print("start up placeId: $_startPlaceId");
     });
 
