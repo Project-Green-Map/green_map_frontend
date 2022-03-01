@@ -233,13 +233,12 @@ class _MapViewState extends State<MapView> {
           List<String?> placeTags = [place.name, place.locality, place.postalCode, place.country];
           for (int i = 0; i < placeTags.length; i++) {
             if (placeTags.elementAt(i)?.isNotEmpty ?? false) {
+              if (isFirst) {
+                isFirst = false;
+              } else {
+                _currentAddress += ", ";
+              }
               _currentAddress += "${placeTags.elementAt(i)}";
-            }
-
-            if (isFirst) {
-              isFirst = false;
-            } else {
-              _currentAddress += ", ";
             }
           }
 
@@ -267,7 +266,8 @@ class _MapViewState extends State<MapView> {
     if (_startPlaceId == "" || _destinationPlaceId == "") {
       return;
     }
-    LatLng southwest = LatLng(min(_startPosition.latitude, _destinationPosition.latitude),
+    LatLng southwest = LatLng(
+        min(_startPosition.latitude, _destinationPosition.latitude),
         min(_startPosition.longitude, _destinationPosition.longitude));
     double diff = _startPosition.latitude - _destinationPosition.latitude;
     if (diff < 0) {
@@ -418,11 +418,8 @@ class _MapViewState extends State<MapView> {
       LatLng? middlePoint = polylineMap[polylineId]?.points[(length! / 3).floor()];
       middlePoint ??= _startPosition;
 
-      BitmapDescriptor bitmapDescriptor = await createCustomMarkerBitmap(routeInfo[i].distanceText +
-          "\n" +
-          routeInfo[i].timeText +
-          "\n" +
-          routeInfo[i].carbonText);
+      BitmapDescriptor bitmapDescriptor =
+          await createCustomMarkerBitmap(routeInfo[i].distanceText + "\n" + routeInfo[i].timeText + "\n" + routeInfo[i].carbonText);
       MarkerId markerId = MarkerId(polylineId.value);
       Marker marker = Marker(
         markerId: markerId,
@@ -550,6 +547,7 @@ class _MapViewState extends State<MapView> {
         : await _placesService.getAutocomplete(searchTerm);
   }
 
+
   setSelectedLocation(String placeId, String description, bool moveCamera) async {
     Place place = await _placesService.getPlace(placeId);
     PlaceSearch placeSearch = PlaceSearch(description: description, placeId: placeId);
@@ -596,7 +594,7 @@ class _MapViewState extends State<MapView> {
     }
   }
 
-  ElevatedButton makeTravelModeButton(TravelMode travelMode) {
+  ElevatedButton makeTravelModeButton(TravelMode travelMode){
     return ElevatedButton(
       child: Text(
         travelMode.name,
@@ -607,19 +605,23 @@ class _MapViewState extends State<MapView> {
         ),
       ),
       style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all<Color>(Colors.blueAccent.shade100),
+          backgroundColor:
+              MaterialStateProperty.all<Color>(Colors.blueAccent.shade100),
           overlayColor: MaterialStateProperty.resolveWith((states) {
-            return states.contains(MaterialState.pressed) ? Colors.blueAccent.shade400 : null;
+            return states.contains(MaterialState.pressed)
+                ? Colors.blueAccent.shade400
+                : null;
           }),
-          shape: MaterialStateProperty.all<RoundedRectangleBorder>(RoundedRectangleBorder(
+          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
             // side: const BorderSide(
             //   color: Colors.blueAccent,
             //   width: 2,
             // ),
           ))),
-      onPressed: () {
-        _updateTravelModeAndRoutes(travelMode);
+        onPressed: () {
+          _updateTravelModeAndRoutes(travelMode);
       },
     );
   }
@@ -716,7 +718,7 @@ class _MapViewState extends State<MapView> {
                           ),
                           width: width * 0.9,
                           child: Padding(
-                            padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                            padding: const EdgeInsets.only(top: 10.0, bottom: 10.0, left: 10.0),
                             //column below is for the two search bars + transit options
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
