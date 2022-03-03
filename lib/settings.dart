@@ -25,7 +25,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _undergroundEnabled = true,
       _shipEnabled = true;
 
-  String _selectedCar = "default";
+  String _selectedCar = "Default (small)";
   late Future<void> _singleReadJson;
 
   @override
@@ -35,40 +35,52 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   List<Car> _cars = [];
-  Map<int, String> _carMap = {0: 'BMW 3', 1: 'Volvo X', 2: 'Toyota Yaris'};
+  List<Car> _userCars = [
+    Car("Default", "(small)", "PETROL"),
+    Car("Default", "(medium)", "PETROL"),
+    Car("Default", "(large)", "PETROL"),
+  ];
+
+  void _addCarToMap(String brand, String model, String fuel) {
+    setState(() {
+      Car car = Car(brand, model, fuel);
+      _userCars.insert(0, car);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Settings')),
       body: SafeArea(
-          child: FutureBuilder<void>(
-              future: _singleReadJson,
-              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                //inspect(_cars);
-                if (snapshot.connectionState == ConnectionState.done) {
-                  return ListView(
-                    children: [
-                      SettingsGroup(
-                        title: 'Common',
-                        children: <Widget>[
-                          buildDistanceUnits(),
-                        ],
-                      ),
-                      SettingsGroup(
-                        title: 'Transport',
-                        children: <Widget>[
-                          buildWalking(),
-                          buildCycling(),
-                          buildDriving(),
-                          buildPublicTransport()
-                        ],
-                      )
-                    ],
-                  );
-                } else
-                  return Center(child: CircularProgressIndicator());
-              })),
+        child: FutureBuilder<void>(
+            future: _singleReadJson,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              //inspect(_cars);
+              if (snapshot.connectionState == ConnectionState.done) {
+                return ListView(
+                  children: [
+                    SettingsGroup(
+                      title: 'Common',
+                      children: <Widget>[
+                        buildDistanceUnits(),
+                      ],
+                    ),
+                    SettingsGroup(
+                      title: 'Transport',
+                      children: <Widget>[
+                        buildWalking(),
+                        buildCycling(),
+                        buildDriving(),
+                        buildPublicTransport()
+                      ],
+                    )
+                  ],
+                );
+              } else
+                return Center(child: CircularProgressIndicator());
+            }),
+      ),
     );
   }
 
@@ -87,7 +99,7 @@ class _SettingsPageState extends State<SettingsPage> {
         onChange: (_) => {_drivingEnabled = !_drivingEnabled},
         childrenIfEnabled: <Widget>[
           SimpleSettingsTile(
-            title: 'Selected vehicle',
+            title: 'Selected Vehicle',
             subtitle: _selectedCar,
             child: Scaffold(
                 appBar: AppBar(
@@ -96,14 +108,22 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 body: SafeArea(
                     child: ListView(children: [
-                  RadioSettingsTile(
+                  SimpleRadioSettingsTile(
                     title: 'Selected car',
                     settingKey: 'key-car140',
-                    values: _carMap,
-                    selected: 0,
+                    values: _userCars.map((Car c) => c.brand + ' ' + c.model).toList(),
+                    selected: _userCars.first.brand + ' ' + _userCars.first.model,
                   ),
                   ListTile(
-                    title: Text('Button'),
+                    leading: const Icon(Icons.add),
+                    trailing: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                    ),
+                    title: const Text(
+                      'Add car...',
+                      textAlign: TextAlign.center,
+                    ),
                     onTap: () => showDialog(
                         context: context, builder: (context) => CarSettings(cars: _cars)),
                   ),
