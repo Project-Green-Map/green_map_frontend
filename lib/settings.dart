@@ -26,6 +26,13 @@ class _SettingsPageState extends State<SettingsPage> {
       _shipEnabled = true;
 
   String _selectedCar = "default";
+  late Future<void> _singleReadJson;
+
+  @override
+  void initState() {
+    super.initState();
+    _singleReadJson = _readJson();
+  }
 
   List<Car> _cars = [];
   Map<int, String> _carMap = {0: 'BMW 3', 1: 'Volvo X', 2: 'Toyota Yaris'};
@@ -36,7 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
       appBar: AppBar(title: Text('Settings')),
       body: SafeArea(
           child: FutureBuilder<void>(
-              future: _readJson(),
+              future: _singleReadJson,
               builder: (BuildContext context, AsyncSnapshot snapshot) {
                 //inspect(_cars);
                 if (snapshot.connectionState == ConnectionState.done) {
@@ -95,7 +102,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     values: _carMap,
                     selected: 0,
                   ),
-                  CarSettings(cars: _cars),
+                  ListTile(
+                    title: Text('Button'),
+                    onTap: () => showDialog(
+                        context: context, builder: (context) => CarSettings(cars: _cars)),
+                  ),
                 ]))),
           )
         ]);
@@ -188,40 +199,9 @@ class _CarSettingsState extends State<CarSettings> {
 
   @override
   Widget build(BuildContext context) {
-    return ModalSettingsTile(
-      title: 'Add a new car',
-      leading: Icon(Icons.add),
-      children: <Widget>[
-        /*SimpleDropDownSettingsTile(
-                          title: 'Brand',
-                          settingKey: 'key-car-brand350',
-                          enabled: true,
-                          values: _cars.map((Car car) => car.brand).toSet().toList() + [""],
-                          // TODO: we want "" to be the default value every time
-                          selected: "Volvo",
-                          onChange: (String value) => {
-                            setState(() {
-                              _selectedCarBrand = value;
-                            })
-                          },
-                        ),
-                        SimpleDropDownSettingsTile(
-                          title: 'Model',
-                          settingKey: 'key-car-model350',
-                          enabled: true, //_selectedCarBrand != "",
-                          selected: "",
-                          values: _cars
-                                  .where((car) => car.brand == _selectedCarBrand)
-                                  .map((car) => car.model)
-                                  .toSet()
-                                  .toList() +
-                              [""],
-                          onChange: (String value) => {
-                            setState(() {
-                              _selectedCarModel = value;
-                            })
-                          },
-                        ),*/
+    return AlertDialog(
+      title: Text('Add new car'),
+      content: Column(children: [
         DropdownButtonFormField(
             dropdownColor: Colors.blueAccent,
             //value: _selectedCarBrand,
@@ -250,7 +230,7 @@ class _CarSettingsState extends State<CarSettings> {
                 .toList()
                 .map((String car) => DropdownMenuItem(child: Text(car), value: car))
                 .toList())
-      ],
+      ]),
     );
   }
 }
