@@ -66,6 +66,7 @@ class _HelpState extends State<Help> {
                       title: Text(
                         i.headerText,
                         style: const TextStyle(fontSize: 24, color: Colors.lightBlue),
+                        textAlign: TextAlign.center,
                       ),
                       dense: true,
                       contentPadding: const EdgeInsets.all(15.0),
@@ -75,7 +76,6 @@ class _HelpState extends State<Help> {
                   child: Text(
                     i.bodyText,
                     style: const TextStyle(fontSize: 20),
-                    textAlign: TextAlign.center,
                   ),
                 ),
                 isExpanded: i.isExpanded,
