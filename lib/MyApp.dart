@@ -15,7 +15,7 @@ import 'package:map/services/places_service.dart';
 import 'package:map/services/routing_service.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
-import 'dart:math' show min;
+import 'dart:math' show max, min;
 
 import './services/geolocator_service.dart';
 import './services/geocoding_service.dart';
@@ -62,7 +62,7 @@ class _MapViewState extends State<MapView> {
     zoom: 14,
   );
 
-  final int _routeNum = 3;
+  final int _routeNum = 5;
 
   final startAddressController = TextEditingController();
   final destinationAddressController = TextEditingController();
@@ -77,7 +77,7 @@ class _MapViewState extends State<MapView> {
   final _routingService = RoutingService();
   final _placesService = PlacesService();
 
-  late TravelMode _travelMode = TravelMode.walking; //TODO: this never gets used?
+  late TravelMode _travelMode = TravelMode.driving;
 
   List<PlaceSearch> searchResults = [];
   final polylinePoints = PolylinePoints();
@@ -119,18 +119,18 @@ class _MapViewState extends State<MapView> {
     required String label,
     required String hint,
     required double width,
-    required Icon prefixIcon,
+    // required Icon prefixIcon,
     Widget? suffixIcon,
     required Function(String) onChanged,
   }) {
     return SizedBox(
-      width: width * 0.8,
+      // width: width * 0.8,
       child: TextField(
         onChanged: onChanged,
         controller: controller,
         focusNode: focusNode,
         decoration: InputDecoration(
-          prefixIcon: prefixIcon,
+          // prefixIcon: prefixIcon,
           suffixIcon: suffixIcon,
           labelText: label,
           filled: true,
@@ -180,19 +180,19 @@ class _MapViewState extends State<MapView> {
     print("startupLogic() called");
 
     await updateCurrentLocation();
-    String _placeIdTmp = await _geocodingService.getPlaceIdFromCoordinates(
+    String? _placeIdTmp = await _geocodingService.getPlaceIdFromCoordinates(
         _currentPosition.latitude, _currentPosition.longitude);
 
     setState(() {
       _startPosition = LatLng(_currentPosition.latitude, _currentPosition.longitude);
-      _startPlaceId = _placeIdTmp;
+      _startPlaceId = _placeIdTmp ?? "";
       print("start up placeId: $_startPlaceId");
     });
 
     await _geocodingService.getPlaceIdFromCoordinates(
         _startPosition.latitude, _startPosition.longitude);
 
-    moveCameraToCurrentLocation();
+    await moveCameraToCurrentLocation();
     // await _createPolyline_debug();
     // print("_createPolyline_debug() called");
     // Marker marker = Marker(
@@ -236,13 +236,12 @@ class _MapViewState extends State<MapView> {
           List<String?> placeTags = [place.name, place.locality, place.postalCode, place.country];
           for (int i = 0; i < placeTags.length; i++) {
             if (placeTags.elementAt(i)?.isNotEmpty ?? false) {
+              if (isFirst) {
+                isFirst = false;
+              } else {
+                _currentAddress += ", ";
+              }
               _currentAddress += "${placeTags.elementAt(i)}";
-            }
-
-            if (isFirst) {
-              isFirst = false;
-            } else {
-              _currentAddress += ", ";
             }
           }
 
@@ -254,8 +253,8 @@ class _MapViewState extends State<MapView> {
     });
   }
 
-  void moveCameraToPosition(double lat, double long, double zoom) {
-    mapController.animateCamera(
+  moveCameraToPosition(double lat, double long, double zoom) async {
+    await mapController.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(lat, long),
@@ -263,6 +262,25 @@ class _MapViewState extends State<MapView> {
         ),
       ),
     );
+  }
+
+  resetCameraVisibleRegion() async {
+    // only called after startPlaceId and destionationPlaceId are set
+    if (_startPlaceId == "" || _destinationPlaceId == "") {
+      return;
+    }
+    LatLng southwest = LatLng(min(_startPosition.latitude, _destinationPosition.latitude),
+        min(_startPosition.longitude, _destinationPosition.longitude));
+    double diff = _startPosition.latitude - _destinationPosition.latitude;
+    if (diff < 0) {
+      diff *= -1;
+    }
+    LatLng northeast = LatLng(
+        max(_startPosition.latitude, _destinationPosition.latitude) + diff * 0.5,
+        max(_startPosition.longitude, _destinationPosition.longitude));
+    LatLngBounds bound = LatLngBounds(southwest: southwest, northeast: northeast);
+    CameraUpdate update = CameraUpdate.newLatLngBounds(bound, 100);
+    mapController.animateCamera(update);
   }
 
   _updateTravelModeAndRoutes(travelMode) async {
@@ -277,13 +295,19 @@ class _MapViewState extends State<MapView> {
         }
       }
     });
+    Marker marker = Marker(
+      markerId: const MarkerId('dest'),
+      position: _destinationPosition,
+    );
+    _markers[marker.markerId] = marker;
+    await resetCameraVisibleRegion();
     await _createMultiplePolylines(_startPlaceId, _destinationPlaceId, travelMode, _routeNum);
     // await _createPolylines_debug(_startPosition.latitude, _startPosition.longitude,
     //     _destinationPosition.latitude, _destinationPosition.longitude, travelMode);
   }
 
-  void moveCameraToCurrentLocation() async {
-    moveCameraToPosition(_currentPosition.latitude, _currentPosition.longitude, 14);
+  moveCameraToCurrentLocation() async {
+    await moveCameraToPosition(_currentPosition.latitude, _currentPosition.longitude, 14);
   }
 
   // LatLng middlePoint;
@@ -341,7 +365,7 @@ class _MapViewState extends State<MapView> {
       text: title,
       style: const TextStyle(
         color: Colors.white70,
-        fontSize: 30.0,
+        fontSize: 35.0,
         fontWeight: FontWeight.bold,
         // background: Paint()
         //   ..color = Colors.blue.shade300
@@ -543,12 +567,12 @@ class _MapViewState extends State<MapView> {
         _startAddress = place.name;
         _startPosition = place.geometry.latLng;
         _startPlaceId = placeId;
-        Marker marker = Marker(
-          markerId: const MarkerId('start'),
-          position: _startPosition,
-        );
-        _markers.remove(marker.markerId);
-        _markers[marker.markerId] = marker;
+        // Marker marker = Marker(
+        //   markerId: const MarkerId('start'),
+        //   position: _startPosition,
+        // );
+        // _markers.remove(marker.markerId);
+        // _markers[marker.markerId] = marker;
       });
     } else if (activeAddressController == "dest") {
       destinationAddressController.text = place.name;
@@ -570,9 +594,77 @@ class _MapViewState extends State<MapView> {
     activeAddressController = null;
 
     if (moveCamera) {
-      moveCameraToPosition(place.geometry.latLng.latitude, place.geometry.latLng.longitude, 14);
+      await moveCameraToPosition(
+          place.geometry.latLng.latitude, place.geometry.latLng.longitude, 14);
     }
   }
+
+  ElevatedButton makeTravelModeButton(TravelMode travelMode) {
+    return ElevatedButton(
+      child: Text(
+        travelMode.name,
+        style: const TextStyle(
+          fontSize: 14,
+          // color: Colors.blueGrey,
+          color: Colors.white,
+        ),
+      ),
+      style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.all<Color>(Colors.blueAccent.shade100),
+          overlayColor: MaterialStateProperty.resolveWith((states) {
+            return states.contains(MaterialState.pressed) ? Colors.blueAccent.shade400 : null;
+          }),
+          shape: MaterialStateProperty.all<RoundedRectangleBorder>(RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+            // side: const BorderSide(
+            //   color: Colors.blueAccent,
+            //   width: 2,
+            // ),
+          ))),
+      onPressed: () {
+        _updateTravelModeAndRoutes(travelMode);
+      },
+    );
+  }
+
+  swapStartAndDestination() {
+    setState(() async {
+      String tmpAddress = _startAddress;
+      _startAddress = _destinationAddress;
+      _destinationAddress = tmpAddress;
+
+      LatLng tmpPosition = _startPosition;
+      _startPosition = _destinationPosition;
+      _destinationPosition = tmpPosition;
+
+      String tmpPlaceId = _startPlaceId;
+      _startPlaceId = _destinationPlaceId;
+      _destinationPlaceId = tmpPlaceId;
+
+      String tmpDisplay = startAddressController.text;
+      startAddressController.text = destinationAddressController.text;
+      destinationAddressController.text = tmpDisplay;
+
+      Marker marker = Marker(
+        markerId: const MarkerId('dest'),
+        position: _destinationPosition,
+      );
+      _markers.remove(marker.markerId);
+      _markers[marker.markerId] = marker;
+      await _updateTravelModeAndRoutes(_travelMode);
+    });
+  }
+
+  // handleBackTap() async {
+  //   setState(() {
+  //     _polylines.clear();
+  //     print("polylines cleared");
+  //   });
+  //   await moveCameraToPosition(
+  //                 _destinationPosition.latitude,
+  //                 _destinationPosition.longitude,
+  //                 14);
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -598,6 +690,29 @@ class _MapViewState extends State<MapView> {
               },
               polylines: Set<Polyline>.of(_polylines.values),
               markers: Set.from(_markers.values),
+            ),
+
+            //centre button
+            SafeArea(
+              child: Align(
+                alignment: FractionalOffset.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 105.0, right: 9.0),
+                  child: Container(
+                    width: 43,
+                    height: 43,
+                    decoration:
+                        const ShapeDecoration(color: Colors.blue, shape: CircleBorder(), shadows: [
+                      BoxShadow(offset: Offset(0, 4), color: Colors.black26, blurRadius: 4.0),
+                    ]),
+                    child: IconButton(
+                      onPressed: () => {moveCameraToCurrentLocation()},
+                      icon: const Icon(Icons.my_location),
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
             ),
 
             //suggestions box background (only show if there is a search):
@@ -648,46 +763,113 @@ class _MapViewState extends State<MapView> {
                                 //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
                                 //   style: TextStyle(fontSize: 20.0),
                                 // ),
-                                const SizedBox(height: 10),
-                                _textField(
-                                    label: 'Start',
-                                    hint: 'Choose starting point',
-                                    prefixIcon: const Icon(Icons.looks_one),
-                                    suffixIcon: IconButton(
-                                      icon: const Icon(Icons.my_location),
-                                      onPressed: () {
-                                        startAddressController.text = _currentAddress;
-                                        _startAddress = _currentAddress;
-                                      },
+                                // const SizedBox(height: 10),
+                                Row(children: <Widget>[
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                  Column(
+                                    children: [
+                                      SizedBox(
+                                        width: 20,
+                                        child: FloatingActionButton(
+                                          foregroundColor: Colors.black,
+                                          backgroundColor: Colors.transparent,
+                                          elevation: 0,
+                                          heroTag: "backBtn",
+                                          mini: true,
+                                          onPressed: () async {
+                                            setState(() {
+                                              _polylines.clear();
+                                              _markers.clear();
+                                              Marker marker = Marker(
+                                                  markerId: const MarkerId('dest'),
+                                                  position: _destinationPosition);
+                                              _markers[marker.markerId] = marker;
+                                              print("polylines cleared");
+                                            });
+                                            await moveCameraToPosition(
+                                                _destinationPosition.latitude,
+                                                _destinationPosition.longitude,
+                                                14);
+                                          },
+                                          child: const Icon(Icons.keyboard_backspace),
+                                        ),
+                                      ),
+                                      // SizedBox(
+                                      //   width: 18,
+                                      //   child: IconButton(
+                                      //     icon: const Icon(
+                                      //         Icons.keyboard_backspace),
+                                      //     onPressed: handleBackTap,
+                                      //   ),
+                                      // ),
+                                      const SizedBox(height: 60),
+                                    ],
+                                  ),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        _textField(
+                                            label: 'Start',
+                                            hint: 'Choose starting point',
+                                            // prefixIcon: const Icon(Icons.looks_one),
+                                            suffixIcon: IconButton(
+                                              icon: const Icon(Icons.my_location),
+                                              onPressed: () async {
+                                                startAddressController.text = _currentAddress;
+                                                _startAddress = _currentAddress;
+                                                await setSelectedLocation(
+                                                    _startPlaceId, _startAddress, false);
+                                                activeAddressController = null;
+                                              },
+                                            ),
+                                            controller: startAddressController,
+                                            focusNode: startAddressFocusNode,
+                                            width: width,
+                                            onChanged: (String value) {
+                                              //// DONE: should probably call locationCallback something else, it does more than just deal with location
+                                              setState(() {
+                                                _startAddress = value;
+                                                ////DONE: should we be doing the above every time the user presses a new key?
+                                                searchPlaces(value);
+                                              });
+                                            }),
+                                        const SizedBox(height: 10),
+                                        _textField(
+                                            label: 'Destination',
+                                            hint: 'Choose destination',
+                                            // prefixIcon: const Icon(Icons.looks_two),
+                                            controller: destinationAddressController,
+                                            focusNode: destinationAddressFocusNode,
+                                            width: width,
+                                            onChanged: (String value) {
+                                              setState(() {
+                                                _destinationAddress = value;
+                                                searchPlaces(value);
+                                              });
+                                            }),
+                                      ],
                                     ),
-                                    controller: startAddressController,
-                                    focusNode: startAddressFocusNode,
-                                    width: width,
-                                    onChanged: (String value) {
-                                      //// DONE: should probably call locationCallback something else, it does more than just deal with location
-                                      setState(() {
-                                        _startAddress = value;
-                                        ////DONE: should we be doing the above every time the user presses a new key?
-                                        searchPlaces(value);
-                                      });
-                                    }),
-                                const SizedBox(height: 10),
-                                _textField(
-                                    label: 'Destination',
-                                    hint: 'Choose destination',
-                                    prefixIcon: const Icon(Icons.looks_two),
-                                    controller: destinationAddressController,
-                                    focusNode: destinationAddressFocusNode,
-                                    width: width,
-                                    onChanged: (String value) {
-                                      setState(() {
-                                        _destinationAddress = value;
-                                        searchPlaces(value);
-                                      });
-                                    }),
+                                  ),
+                                  FloatingActionButton(
+                                    heroTag: "revertBtn",
+                                    mini: true,
+                                    onPressed: () => {swapStartAndDestination()},
+                                    child: const Icon(Icons.change_circle),
+                                    ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
+                                  ),
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                ]),
 
                                 //spacer
-                                const SizedBox(height: 10),
+                                // const SizedBox(height: 10),
 
                                 if (_startAddress != "" &&
                                     _destinationAddress != "" &&
@@ -695,92 +877,10 @@ class _MapViewState extends State<MapView> {
                                     !destinationAddressFocusNode.hasFocus)
                                   //row containing transit options
                                   Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                                    TextButton(
-                                      child: const Text(
-                                        "Walk",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.blueGrey,
-                                        ),
-                                      ),
-                                      style: ButtonStyle(
-                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                          RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(18.0),
-                                            side: const BorderSide(
-                                              color: Colors.blueAccent,
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () =>
-                                          {_updateTravelModeAndRoutes(TravelMode.walking)},
-                                    ),
-                                    TextButton(
-                                      child: const Text(
-                                        "Transit",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.blueGrey,
-                                        ),
-                                      ),
-                                      style: ButtonStyle(
-                                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                              RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18.0),
-                                        side: const BorderSide(
-                                          color: Colors.blueAccent,
-                                          width: 2,
-                                        ),
-                                      ))),
-                                      onPressed: () =>
-                                          {_updateTravelModeAndRoutes(TravelMode.transit)},
-                                    ),
-                                    TextButton(
-                                      child: const Text(
-                                        "Drive",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.blueGrey,
-                                        ),
-                                      ),
-                                      style: ButtonStyle(
-                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                          RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(18.0),
-                                            side: const BorderSide(
-                                              color: Colors.blueAccent,
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () =>
-                                          {_updateTravelModeAndRoutes(TravelMode.driving)},
-                                    ),
-                                    TextButton(
-                                      child: const Text(
-                                        "Cycle",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.blueGrey,
-                                        ),
-                                      ),
-                                      style: ButtonStyle(
-                                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                          RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(18.0),
-                                            side: const BorderSide(
-                                              color: Colors.blueAccent,
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () =>
-                                          {_updateTravelModeAndRoutes(TravelMode.bicycling)},
-                                    ),
+                                    makeTravelModeButton(TravelMode.walking),
+                                    makeTravelModeButton(TravelMode.transit),
+                                    makeTravelModeButton(TravelMode.driving),
+                                    makeTravelModeButton(TravelMode.bicycling)
                                   ]),
                               ],
                             ),
@@ -833,21 +933,6 @@ class _MapViewState extends State<MapView> {
             ),
 
             //centre button
-            SafeArea(
-              child: Align(
-                alignment: FractionalOffset.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 100.0, right: 7.0),
-                  child: FloatingActionButton(
-                    heroTag: "centreBtn",
-                    mini: true,
-                    onPressed: () => {moveCameraToCurrentLocation()},
-                    child: const Icon(Icons.my_location),
-                    ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
-                  ),
-                ),
-              ),
-            ),
 
             //settings button
             SafeArea(
@@ -883,7 +968,7 @@ class _MapViewState extends State<MapView> {
                     onPressed: () => {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => CarbonStats()),
+                        MaterialPageRoute(builder: (context) => const CarbonStats()),
                       ),
                     },
                     child: const Icon(Icons.eco),

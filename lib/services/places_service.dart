@@ -20,10 +20,10 @@ class PlacesService {
       return cacheManager.getFromCache(search);
     } else {
       //!Comment to remove real data
-      //Uri uri = Uri.parse(
+      // Uri uri = Uri.parse(
       //    'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$search&key=$key');
-      //var response = await http.get(uri);
-      //var json = convert.jsonDecode(response.body);
+      // var response = await http.get(uri);
+      // var json = convert.jsonDecode(response.body);
 
       //!Comment to remove dummy data
       var response = await rootBundle

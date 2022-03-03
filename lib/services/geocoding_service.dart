@@ -17,16 +17,30 @@ class GeocodingService {
     }
   }
 
-  Future<String> getPlaceIdFromCoordinates(lat, lng) async {
+  Future<String?> getPlaceIdFromCoordinates(lat, lng) async {
     final key = apiManager.getKey();
     Uri uri =
         Uri.parse('https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$key');
 
-    http.Response encodedString = await http.get(uri);
+    print(uri);
+    http.Response encodedString;
+    try {
+      encodedString = await http.get(uri);
+    } catch (e) {
+      print(e);
+      return null;
+    }
     String response = encodedString.body;
 
     var json = convert.jsonDecode(response);
-    String placeId = json['results'][0]['place_id']; //TODO: handle results being empty
+    String? placeId;
+    try {
+      placeId = json['results'][0]['place_id']; //TODO: handle results being empty
+    } catch (e) {
+      print(e);
+      return null;
+    }
+    print("PlaceId obtained: $placeId");
     return placeId;
   }
 }

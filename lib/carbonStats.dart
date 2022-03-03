@@ -1,6 +1,7 @@
 import 'package:flutter/animation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:map/help.dart';
 
 class CarbonStats extends StatefulWidget {
   const CarbonStats({Key? key}) : super(key: key);
@@ -59,7 +60,8 @@ class _CarbonStatsState extends State<CarbonStats> {
         .map(((List<dynamic> e) => ListTile(
               title: Text(
                 e[0] as String,
-                style: TextStyle(color: Colors.lightBlue, fontSize: 24, fontFamily: 'Quicksand'),
+                style:
+                    const TextStyle(color: Colors.lightBlue, fontSize: 24, fontFamily: 'Quicksand'),
                 textAlign: TextAlign.center,
               ),
               subtitle: Text(
@@ -112,7 +114,7 @@ class _CarbonStatsState extends State<CarbonStats> {
       /*appBar: AppBar(
         title: const Text('Carbon Tracker'),
       ),*/
-      backgroundColor: Color.fromARGB(255, 253, 250, 234),
+      backgroundColor: const Color.fromARGB(255, 253, 250, 234),
       body: Center(
         child: Stack(
           children: [
@@ -149,14 +151,19 @@ class _CarbonStatsState extends State<CarbonStats> {
                             fontSize: 96, color: Colors.lightGreen, fontFamily: 'Quicksand'),
                       ),
                     ),
-                    const Align(
-                      child: Text(
-                        "kilograms CO₂e!",
-                        style: TextStyle(
-                            fontSize: 32,
-                            color: Colors.lightGreen,
-                            fontFamily: 'Quicksand',
-                            height: 0.6),
+                    Align(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Text(
+                            "kilograms CO₂e!",
+                            style: TextStyle(
+                                fontSize: 32,
+                                color: Colors.lightGreen,
+                                fontFamily: 'Quicksand',
+                                height: 0.6),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 60),
@@ -249,6 +256,42 @@ class _CarbonStatsState extends State<CarbonStats> {
                   ],
                 ),
               ),
+            ),
+            Column(
+              children: [
+                const SizedBox(height: 280),
+                Row(
+                  children: [
+                    const SizedBox(width: 310),
+                    TextButton(
+                      child: const Text(
+                        "(?)",
+                        style: TextStyle(
+                            fontSize: 18.0,
+                            color: Colors.transparent,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black38,
+                                offset: Offset(0, -5),
+                              )
+                            ],
+                            decoration: TextDecoration.underline,
+                            decorationColor: Colors.black38),
+                        textAlign: TextAlign.center,
+                      ),
+                      //style: ButtonStyle(
+                      //backgroundColor: MaterialStateProperty.all(Colors.black12),
+                      //shape: MaterialStateProperty.all(const CircleBorder())),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const Help()),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
             Align(
               //needs to be on top of everything, so last entry in the stack list
