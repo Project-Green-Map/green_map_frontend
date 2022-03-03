@@ -163,7 +163,8 @@ class _MapViewState extends State<MapView> {
     super.initState();
 
     // make sure to initialize before map loading
-    BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(4, 4)), 'assets/images/car.png')
+    BitmapDescriptor.fromAssetImage(
+            ImageConfiguration(size: Size(4, 4)), 'assets/images/car.png')
         .then((d) {
       customIcon = d;
     });
@@ -181,7 +182,8 @@ class _MapViewState extends State<MapView> {
         _currentPosition.latitude, _currentPosition.longitude);
 
     setState(() {
-      _startPosition = LatLng(_currentPosition.latitude, _currentPosition.longitude);
+      _startPosition =
+          LatLng(_currentPosition.latitude, _currentPosition.longitude);
       _startPlaceId = _placeIdTmp ?? "";
       print("start up placeId: $_startPlaceId");
     });
@@ -230,7 +232,12 @@ class _MapViewState extends State<MapView> {
           ////Done: This doesn't work for street names, e.g. "17, , CB2 3NE, UK". Could we see which ones are non-null and use those?
 
           bool isFirst = true;
-          List<String?> placeTags = [place.name, place.locality, place.postalCode, place.country];
+          List<String?> placeTags = [
+            place.name,
+            place.locality,
+            place.postalCode,
+            place.country
+          ];
           for (int i = 0; i < placeTags.length; i++) {
             if (placeTags.elementAt(i)?.isNotEmpty ?? false) {
               if (isFirst) {
@@ -266,16 +273,19 @@ class _MapViewState extends State<MapView> {
     if (_startPlaceId == "" || _destinationPlaceId == "") {
       return;
     }
-    LatLng southwest = LatLng(min(_startPosition.latitude, _destinationPosition.latitude),
+    LatLng southwest = LatLng(
+        min(_startPosition.latitude, _destinationPosition.latitude),
         min(_startPosition.longitude, _destinationPosition.longitude));
     double diff = _startPosition.latitude - _destinationPosition.latitude;
     if (diff < 0) {
       diff *= -1;
     }
     LatLng northeast = LatLng(
-        max(_startPosition.latitude, _destinationPosition.latitude) + diff * 0.5,
+        max(_startPosition.latitude, _destinationPosition.latitude) +
+            diff * 0.5,
         max(_startPosition.longitude, _destinationPosition.longitude));
-    LatLngBounds bound = LatLngBounds(southwest: southwest, northeast: northeast);
+    LatLngBounds bound =
+        LatLngBounds(southwest: southwest, northeast: northeast);
     CameraUpdate update = CameraUpdate.newLatLngBounds(bound, 100);
     mapController.animateCamera(update);
   }
@@ -298,26 +308,30 @@ class _MapViewState extends State<MapView> {
     );
     _markers[marker.markerId] = marker;
     await resetCameraVisibleRegion();
-    await _createMultiplePolylines(_startPlaceId, _destinationPlaceId, travelMode, _routeNum);
+    await _createMultiplePolylines(
+        _startPlaceId, _destinationPlaceId, travelMode, _routeNum);
     // await _createPolylines_debug(_startPosition.latitude, _startPosition.longitude,
     //     _destinationPosition.latitude, _destinationPosition.longitude, travelMode);
   }
 
   moveCameraToCurrentLocation() async {
-    await moveCameraToPosition(_currentPosition.latitude, _currentPosition.longitude, 14);
+    await moveCameraToPosition(
+        _currentPosition.latitude, _currentPosition.longitude, 14);
   }
 
   // LatLng middlePoint;
 
-  _createMultiplePolylines(startPlaceId, destinationPlaceId, travelMode, val) async {
+  _createMultiplePolylines(
+      startPlaceId, destinationPlaceId, travelMode, val) async {
     print("_createMultiplePolylines() called");
 
-    var vehicleInfoSample = await rootBundle
-        .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
+    var vehicleInfoSample = await rootBundle.loadString(
+        'lib/dummy_data/vehicle_information/diesel_small_all_info.json');
     print(vehicleInfoSample);
 
-    Map<String, RouteInfo> encodedRoutes = await _routingService
-        .getMultipleEncodedRoutesFromPlaceId(startPlaceId, destinationPlaceId, travelMode, val,
+    Map<String, RouteInfo> encodedRoutes =
+        await _routingService.getMultipleEncodedRoutesFromPlaceId(
+            startPlaceId, destinationPlaceId, travelMode, val,
             vehicleInfo: vehicleInfoSample);
     // List<String> encodedRoutes =
     //     await _routingService.getMultipleEncodedRoutesFromPlaceId(
@@ -326,7 +340,8 @@ class _MapViewState extends State<MapView> {
     // Map<PolylineId, Polyline> polylines = await _routingService.getMultipleRouteFromPlaceId(
     //     startPlaceId, destinationPlaceId, travelMode, num);
 
-    Map<PolylineId, Polyline> polylines = await decodePolylines(List.from(encodedRoutes.keys));
+    Map<PolylineId, Polyline> polylines =
+        await decodePolylines(List.from(encodedRoutes.keys));
     await createMarkersForEachRoute(polylines, List.from(encodedRoutes.values));
     setState(() {
       _polylines = polylines;
@@ -389,14 +404,16 @@ class _MapViewState extends State<MapView> {
 
     tp.layout();
     c.drawRRect(
-        RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, tp.width.toInt() + 40, tp.height.toInt() + 20),
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(0, 0, tp.width.toInt() + 40, tp.height.toInt() + 20),
             const Radius.circular(15.0)),
         backgroundPaint);
     tp.paint(c, const Offset(20.0, 10.0));
 
     Picture p = recorder.endRecording();
-    ByteData? pngBytes = await (await p.toImage(tp.width.toInt() + 40, tp.height.toInt() + 20))
-        .toByteData(format: ImageByteFormat.png);
+    ByteData? pngBytes =
+        await (await p.toImage(tp.width.toInt() + 40, tp.height.toInt() + 20))
+            .toByteData(format: ImageByteFormat.png);
 
     Uint8List data = Uint8List.view((pngBytes?.buffer)!);
 
@@ -414,14 +431,16 @@ class _MapViewState extends State<MapView> {
       // }
       // for (PolylineId polylineId in polylineMap.keys) {
       int? length = polylineMap[polylineId]?.points.length;
-      LatLng? middlePoint = polylineMap[polylineId]?.points[(length! / 3).floor()];
+      LatLng? middlePoint =
+          polylineMap[polylineId]?.points[(length! / 3).floor()];
       middlePoint ??= _startPosition;
 
-      BitmapDescriptor bitmapDescriptor = await createCustomMarkerBitmap(routeInfo[i].distanceText +
-          "\n" +
-          routeInfo[i].timeText +
-          "\n" +
-          routeInfo[i].carbonText);
+      BitmapDescriptor bitmapDescriptor = await createCustomMarkerBitmap(
+          routeInfo[i].distanceText +
+              "\n" +
+              routeInfo[i].timeText +
+              "\n" +
+              routeInfo[i].carbonText);
       MarkerId markerId = MarkerId(polylineId.value);
       Marker marker = Marker(
         markerId: markerId,
@@ -438,7 +457,8 @@ class _MapViewState extends State<MapView> {
     print("markers created");
   }
 
-  Future<Map<PolylineId, Polyline>> decodePolylines(List<String> encodedRoutes) async {
+  Future<Map<PolylineId, Polyline>> decodePolylines(
+      List<String> encodedRoutes) async {
     print("decodePolylines() called");
 
     Map<PolylineId, Polyline> routes = <PolylineId, Polyline>{};
@@ -462,12 +482,14 @@ class _MapViewState extends State<MapView> {
       for (PolylineId id in _polylines.keys) {
         MarkerId markerId = MarkerId(id.value);
         if (polylineId == id) {
-          _polylines[id] = (_polylines[id]?.copyWith(colorParam: Colors.red, zIndexParam: 1))!;
+          _polylines[id] = (_polylines[id]
+              ?.copyWith(colorParam: Colors.red, zIndexParam: 1))!;
           _markers[markerId] = (_markers[markerId]?.copyWith(
             visibleParam: true,
           ))!;
         } else {
-          _polylines[id] = (_polylines[id]?.copyWith(colorParam: Colors.grey, zIndexParam: 0))!;
+          _polylines[id] = (_polylines[id]
+              ?.copyWith(colorParam: Colors.grey, zIndexParam: 0))!;
           _markers[markerId] = (_markers[markerId]?.copyWith(
             visibleParam: false,
           ))!;
@@ -549,9 +571,11 @@ class _MapViewState extends State<MapView> {
         : await _placesService.getAutocomplete(searchTerm);
   }
 
-  setSelectedLocation(String placeId, String description, bool moveCamera) async {
+  setSelectedLocation(
+      String placeId, String description, bool moveCamera) async {
     Place place = await _placesService.getPlace(placeId);
-    PlaceSearch placeSearch = PlaceSearch(description: description, placeId: placeId);
+    PlaceSearch placeSearch =
+        PlaceSearch(description: description, placeId: placeId);
 
     if (activeAddressController == null) {
       print("(WARN) activeAddressController null...");
@@ -607,11 +631,15 @@ class _MapViewState extends State<MapView> {
         ),
       ),
       style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all<Color>(Colors.blueAccent.shade100),
+          backgroundColor:
+              MaterialStateProperty.all<Color>(Colors.blueAccent.shade100),
           overlayColor: MaterialStateProperty.resolveWith((states) {
-            return states.contains(MaterialState.pressed) ? Colors.blueAccent.shade400 : null;
+            return states.contains(MaterialState.pressed)
+                ? Colors.blueAccent.shade400
+                : null;
           }),
-          shape: MaterialStateProperty.all<RoundedRectangleBorder>(RoundedRectangleBorder(
+          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
             // side: const BorderSide(
             //   color: Colors.blueAccent,
@@ -624,7 +652,7 @@ class _MapViewState extends State<MapView> {
     );
   }
 
-  swapStartAndDestination() {
+  swapStartAndDestionation() {
     setState(() async {
       String tmpAddress = _startAddress;
       _startAddress = _destinationAddress;
@@ -712,7 +740,8 @@ class _MapViewState extends State<MapView> {
             ),
 
             //suggestions box background (only show if there is a search):
-            if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
+            if (startAddressFocusNode.hasFocus ||
+                destinationAddressFocusNode.hasFocus)
               Container(
                 height: height,
                 decoration: BoxDecoration(
@@ -727,7 +756,8 @@ class _MapViewState extends State<MapView> {
                 print("onWillPop - search area");
                 // Intercepts "back" action by user and
                 // "add" an extra layer if the user is typing in the search bars
-                if (startAddressFocusNode.hasFocus | destinationAddressFocusNode.hasFocus) {
+                if (startAddressFocusNode.hasFocus |
+                    destinationAddressFocusNode.hasFocus) {
                   FocusScope.of(context).unfocus();
                   return false;
                 }
@@ -750,7 +780,8 @@ class _MapViewState extends State<MapView> {
                           ),
                           width: width * 0.9,
                           child: Padding(
-                            padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                            padding:
+                                const EdgeInsets.only(top: 10.0, bottom: 10.0),
                             //column below is for the two search bars + transit options
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -815,12 +846,16 @@ class _MapViewState extends State<MapView> {
                                             hint: 'Choose starting point',
                                             // prefixIcon: const Icon(Icons.looks_one),
                                             suffixIcon: IconButton(
-                                              icon: const Icon(Icons.my_location),
+                                              icon:
+                                                  const Icon(Icons.my_location),
                                               onPressed: () async {
-                                                startAddressController.text = _currentAddress;
+                                                startAddressController.text =
+                                                    _currentAddress;
                                                 _startAddress = _currentAddress;
                                                 await setSelectedLocation(
-                                                    _startPlaceId, _startAddress, false);
+                                                    _startPlaceId,
+                                                    _startAddress,
+                                                    false);
                                                 activeAddressController = null;
                                               },
                                             ),
@@ -840,8 +875,10 @@ class _MapViewState extends State<MapView> {
                                             label: 'Destination',
                                             hint: 'Choose destination',
                                             // prefixIcon: const Icon(Icons.looks_two),
-                                            controller: destinationAddressController,
-                                            focusNode: destinationAddressFocusNode,
+                                            controller:
+                                                destinationAddressController,
+                                            focusNode:
+                                                destinationAddressFocusNode,
                                             width: width,
                                             onChanged: (String value) {
                                               setState(() {
@@ -855,7 +892,8 @@ class _MapViewState extends State<MapView> {
                                   FloatingActionButton(
                                     heroTag: "revertBtn",
                                     mini: true,
-                                    onPressed: () => {swapStartAndDestination()},
+                                    onPressed: () =>
+                                        {swapStartAndDestionation()},
                                     child: const Icon(Icons.change_circle),
                                     ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
                                   ),
@@ -872,12 +910,19 @@ class _MapViewState extends State<MapView> {
                                     !startAddressFocusNode.hasFocus &&
                                     !destinationAddressFocusNode.hasFocus)
                                   //row containing transit options
-                                  Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                                    makeTravelModeButton(TravelMode.walking),
-                                    makeTravelModeButton(TravelMode.transit),
-                                    makeTravelModeButton(TravelMode.driving),
-                                    makeTravelModeButton(TravelMode.bicycling)
-                                  ]),
+                                  Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        makeTravelModeButton(
+                                            TravelMode.walking),
+                                        makeTravelModeButton(
+                                            TravelMode.transit),
+                                        makeTravelModeButton(
+                                            TravelMode.driving),
+                                        makeTravelModeButton(
+                                            TravelMode.bicycling)
+                                      ]),
                               ],
                             ),
                           ),
@@ -887,20 +932,25 @@ class _MapViewState extends State<MapView> {
                         const SizedBox(height: 10),
 
                         //suggestions list (only show if there is a search):
-                        if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
+                        if (startAddressFocusNode.hasFocus ||
+                            destinationAddressFocusNode.hasFocus)
                           ListView.builder(
                             shrinkWrap: true,
                             itemBuilder: ((context, index) {
                               return Card(
                                 elevation: 3,
-                                margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+                                margin: const EdgeInsets.symmetric(
+                                    vertical: 2, horizontal: 10),
                                 color: Colors.black.withOpacity(0.7),
                                 child: ListTile(
                                   title: Text(searchResults[index].description,
-                                      style: const TextStyle(color: Colors.white)),
+                                      style:
+                                          const TextStyle(color: Colors.white)),
                                   onTap: () async {
-                                    await setSelectedLocation(searchResults[index].placeId,
-                                        searchResults[index].description, true);
+                                    await setSelectedLocation(
+                                        searchResults[index].placeId,
+                                        searchResults[index].description,
+                                        true);
                                     activeAddressController = null;
                                   },
                                 ),
@@ -952,7 +1002,8 @@ class _MapViewState extends State<MapView> {
                     onPressed: () => {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const CarbonStats()),
+                        MaterialPageRoute(
+                            builder: (context) => const CarbonStats()),
                       ),
                     },
                     child: const Icon(Icons.eco),
