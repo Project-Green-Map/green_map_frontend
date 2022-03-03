@@ -1,0 +1,24 @@
+{
+    "cars": [
+        {
+            "brand": "Volvo",
+            "model": "XYZ",
+            "fuel": "PETROL"
+        },
+        {
+            "brand": "BMW",
+            "model": "sdsnj",
+            "fuel": "DIESEL"
+        },
+        {
+            "brand": "Volvo",
+            "model": "XYZ",
+            "fuel": "PETROL"
+        },
+        {
+            "brand": "Volvo",
+            "model": "XYZ",
+            "fuel": "DIESEL"
+        }
+    ]
+}

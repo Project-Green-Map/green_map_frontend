@@ -1,14 +1,16 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
+import './models/car.dart';
+
 class SettingsPage extends StatefulWidget {
+  const SettingsPage({Key? key}) : super(key: key);
+
   @override
   _SettingsPageState createState() => _SettingsPageState();
-}
-
-class Car {
-  String brand, model, size;
-  Car(this.brand, this.model, this.size);
 }
 
 class _SettingsPageState extends State<SettingsPage> {
@@ -22,35 +24,81 @@ class _SettingsPageState extends State<SettingsPage> {
       _trainEnabled = true,
       _undergroundEnabled = true,
       _shipEnabled = true;
+
+  String _selectedCar = "default";
+
   List<Car> _cars = [];
-  Map<int, String> _carMAp = {0: 'Volvo X', 1: 'Toyota Y', 2: 'BMW xyz'};
+  Map<int, String> _carMap = {0: 'BMW 3', 1: 'Volvo X', 2: 'Toyota Yaris'};
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('Settings')),
-        body: SafeArea(
-          child: ListView(
-            padding: EdgeInsets.all(24),
-            children: [
-              SettingsGroup(
-                title: 'Common',
-                children: <Widget>[
-                  buildDistanceUnits(),
-                ],
-              ),
-              SettingsGroup(
-                title: 'Transport',
-                children: <Widget>[
-                  buildWalking(),
-                  buildCycling(),
-                  buildDriving(),
-                  buildPublicTransport()
-                ],
-              )
-            ],
-          ),
-        ));
+      appBar: AppBar(title: Text('Settings')),
+      body: SafeArea(
+          child: FutureBuilder<void>(
+              future: _readJson(),
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                //inspect(_cars);
+                if (snapshot.connectionState == ConnectionState.done) {
+                  return ListView(
+                    children: [
+                      SettingsGroup(
+                        title: 'Common',
+                        children: <Widget>[
+                          buildDistanceUnits(),
+                        ],
+                      ),
+                      SettingsGroup(
+                        title: 'Transport',
+                        children: <Widget>[
+                          buildWalking(),
+                          buildCycling(),
+                          buildDriving(),
+                          buildPublicTransport()
+                        ],
+                      )
+                    ],
+                  );
+                } else
+                  return Center(child: CircularProgressIndicator());
+              })),
+    );
+  }
+
+  Future<void> _readJson() async {
+    String data = await DefaultAssetBundle.of(context).loadString("lib/assets/data/data2.json");
+    List<dynamic> listJson = jsonDecode(data)['cars'];
+    _cars = listJson.map((element) => Car.fromJson(element)).toList();
+  }
+
+  Widget buildDriving() {
+    return SwitchSettingsTile(
+        leading: Icon(Icons.directions_car_outlined),
+        settingKey: 'key-driving5',
+        defaultValue: _drivingEnabled,
+        title: 'Driving',
+        onChange: (_) => {_drivingEnabled = !_drivingEnabled},
+        childrenIfEnabled: <Widget>[
+          SimpleSettingsTile(
+            title: 'Selected vehicle',
+            subtitle: _selectedCar,
+            child: Scaffold(
+                appBar: AppBar(
+                  title: Text('Car settings'),
+                  actions: <Widget>[IconButton(onPressed: null, icon: Icon(Icons.edit))],
+                ),
+                body: SafeArea(
+                    child: ListView(children: [
+                  RadioSettingsTile(
+                    title: 'Selected car',
+                    settingKey: 'key-car140',
+                    values: _carMap,
+                    selected: 0,
+                  ),
+                  CarSettings(cars: _cars),
+                ]))),
+          )
+        ]);
   }
 
   Widget buildDistanceUnits() => SimpleDropDownSettingsTile(
@@ -61,45 +109,12 @@ class _SettingsPageState extends State<SettingsPage> {
         onChange: (value) => {_distanceUnits = value},
       );
 
-  Widget buildDriving() => SwitchSettingsTile(
-          leading: Icon(Icons.directions_car_outlined),
-          settingKey: 'key-driving4',
-          defaultValue: _drivingEnabled,
-          title: 'Driving',
-          onChange: (_) => {_drivingEnabled = !_drivingEnabled},
-          childrenIfEnabled: <Widget>[
-            RadioSettingsTile(
-              title: 'Selected vehicle',
-              settingKey: 'key-car2',
-              values: _carMAp,
-              selected: 0,
-              subtitle: '',
-            ),
-            ModalSettingsTile(
-              title: 'Add a new car',
-              leading: Icon(Icons.add_rounded),
-              children: <Widget>[
-                SimpleDropDownSettingsTile(
-                  title: 'Brand',
-                  settingKey: 'key-car-brand2',
-                  values: ['Volvo', 'Toyota', 'BMW', 'Cadillac', 'Chevrolet'],
-                  selected: 'BMW',
-                ),
-                SimpleDropDownSettingsTile(
-                    title: 'Model',
-                    settingKey: 'key-car-model2',
-                    selected: 'X',
-                    values: ['X', 'Y', 'Z'])
-              ],
-            )
-          ]);
-
   Widget buildWalking() => SwitchSettingsTile(
       title: 'Walking',
-      leading: Icon(Icons.directions_walk),
+      leading: Icon(Icons.add),
       defaultValue: _walkingEnabled,
       settingKey: 'key-walking3',
-      onChange: (_) => {print(_walkingEnabled), _walkingEnabled = !_walkingEnabled});
+      onChange: (_) => {_walkingEnabled = !_walkingEnabled});
 
   Widget buildCycling() => SwitchSettingsTile(
         title: 'Cycling',
@@ -152,6 +167,90 @@ class _SettingsPageState extends State<SettingsPage> {
           )
         ],
       );
+}
 
-  //Widget navigateToCars(BuildContext context) => SafeArea(child: child)
+class CarSettings extends StatefulWidget {
+  List<Car> cars;
+
+  CarSettings({Key? key, required this.cars}) : super(key: key);
+
+  @override
+  _CarSettingsState createState() => _CarSettingsState(cars);
+}
+
+class _CarSettingsState extends State<CarSettings> {
+  List<Car> _cars;
+  String? _selectedCarBrand = null;
+  String? _selectedCarModel = null;
+  String? _selectedCarFuel = null;
+
+  _CarSettingsState(this._cars);
+
+  @override
+  Widget build(BuildContext context) {
+    return ModalSettingsTile(
+      title: 'Add a new car',
+      leading: Icon(Icons.add),
+      children: <Widget>[
+        /*SimpleDropDownSettingsTile(
+                          title: 'Brand',
+                          settingKey: 'key-car-brand350',
+                          enabled: true,
+                          values: _cars.map((Car car) => car.brand).toSet().toList() + [""],
+                          // TODO: we want "" to be the default value every time
+                          selected: "Volvo",
+                          onChange: (String value) => {
+                            setState(() {
+                              _selectedCarBrand = value;
+                            })
+                          },
+                        ),
+                        SimpleDropDownSettingsTile(
+                          title: 'Model',
+                          settingKey: 'key-car-model350',
+                          enabled: true, //_selectedCarBrand != "",
+                          selected: "",
+                          values: _cars
+                                  .where((car) => car.brand == _selectedCarBrand)
+                                  .map((car) => car.model)
+                                  .toSet()
+                                  .toList() +
+                              [""],
+                          onChange: (String value) => {
+                            setState(() {
+                              _selectedCarModel = value;
+                            })
+                          },
+                        ),*/
+        DropdownButtonFormField(
+            dropdownColor: Colors.blueAccent,
+            //value: _selectedCarBrand,
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedCarBrand = newValue;
+              });
+            },
+            items: _cars
+                .map((Car car) => car.brand)
+                .toSet()
+                .toList()
+                .map((String car) => DropdownMenuItem(child: Text(car), value: car))
+                .toList()),
+        DropdownButtonFormField(
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedCarModel = newValue;
+              });
+            },
+            dropdownColor: Colors.blueAccent,
+            items: _cars
+                .where((car) => car.brand == _selectedCarBrand)
+                .map((car) => car.model)
+                .toSet()
+                .toList()
+                .map((String car) => DropdownMenuItem(child: Text(car), value: car))
+                .toList())
+      ],
+    );
+  }
 }
