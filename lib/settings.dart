@@ -194,7 +194,8 @@ class _CarSettingsState extends State<CarSettings> {
   String? _selectedCarBrand = null;
   String? _selectedCarModel = null;
   String? _selectedCarFuel = null;
-  String? _modelVal;
+  String? _brandEnable;
+  String? _modelEnable;
 
   _CarSettingsState(this._cars);
 
@@ -209,7 +210,8 @@ class _CarSettingsState extends State<CarSettings> {
             onChanged: (String? newValue) {
               setState(() {
                 _selectedCarBrand = newValue;
-                _modelVal = null;
+                _brandEnable = null;
+                _modelEnable = null;
               });
             },
             items: _cars
@@ -219,11 +221,12 @@ class _CarSettingsState extends State<CarSettings> {
                 .map((String car) => DropdownMenuItem(child: Text(car), value: car))
                 .toList()),
         DropdownButtonFormField(
-          value: _modelVal,
+          value: _brandEnable,
           onChanged: (String? newValue) {
             setState(() {
               _selectedCarModel = newValue;
-              _modelVal = newValue;
+              _brandEnable = newValue;
+              _modelEnable = null;
             });
           },
           dropdownColor: Colors.blueAccent,
@@ -234,7 +237,23 @@ class _CarSettingsState extends State<CarSettings> {
               .toList()
               .map((String car) => DropdownMenuItem(child: Text(car), value: car))
               .toList(),
-        )
+        ),
+        DropdownButtonFormField(
+            value: _modelEnable,
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedCarFuel = newValue;
+                _modelEnable = newValue;
+              });
+            },
+            dropdownColor: Colors.blueAccent,
+            items: _cars
+                .where((car) => car.brand == _selectedCarBrand && car.model == _selectedCarModel)
+                .map((car) => car.fuel)
+                .toSet()
+                .toList()
+                .map((String car) => DropdownMenuItem(child: Text(car), value: car))
+                .toList())
       ]),
     );
   }
