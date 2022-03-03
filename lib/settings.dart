@@ -201,60 +201,65 @@ class _CarSettingsState extends State<CarSettings> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Add new car'),
-      content: Column(children: [
-        DropdownButtonFormField(
-            dropdownColor: Colors.blueAccent,
-            //value: _selectedCarBrand,
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedCarBrand = newValue;
-                _brandEnable = null;
-                _modelEnable = null;
-              });
-            },
-            items: _cars
-                .map((Car car) => car.brand)
-                .toSet()
-                .toList()
-                .map((String car) => DropdownMenuItem(child: Text(car), value: car))
-                .toList()),
-        DropdownButtonFormField(
-          value: _brandEnable,
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedCarModel = newValue;
-              _brandEnable = newValue;
-              _modelEnable = null;
-            });
-          },
-          dropdownColor: Colors.blueAccent,
-          items: _cars
-              .where((car) => car.brand == _selectedCarBrand)
-              .map((car) => car.model)
-              .toSet()
-              .toList()
-              .map((String car) => DropdownMenuItem(child: Text(car), value: car))
-              .toList(),
-        ),
-        DropdownButtonFormField(
-            value: _modelEnable,
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedCarFuel = newValue;
-                _modelEnable = newValue;
-              });
-            },
-            dropdownColor: Colors.blueAccent,
-            items: _cars
-                .where((car) => car.brand == _selectedCarBrand && car.model == _selectedCarModel)
-                .map((car) => car.fuel)
-                .toSet()
-                .toList()
-                .map((String car) => DropdownMenuItem(child: Text(car), value: car))
-                .toList())
-      ]),
-    );
+    Size _size = MediaQuery.of(context).size;
+    return Container(
+        height: _size.height / 2,
+        child: AlertDialog(
+          title: Text('Add new car'),
+          content: Column(children: [
+            DropdownButtonFormField(
+                dropdownColor: Colors.blueAccent,
+                //value: _selectedCarBrand,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedCarBrand = newValue;
+                    _brandEnable = null;
+                    _modelEnable = null;
+                  });
+                },
+                items: _cars
+                    .map((Car car) => car.brand)
+                    .toSet()
+                    .toList()
+                    .map((String car) => DropdownMenuItem(child: Text(car), value: car))
+                    .toList()),
+            DropdownButtonFormField(
+              value: _brandEnable,
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedCarModel = newValue;
+                  _brandEnable = newValue;
+                  _modelEnable = null;
+                });
+              },
+              dropdownColor: Colors.blueAccent,
+              items: _cars
+                  .where((car) => car.brand == _selectedCarBrand)
+                  .map((car) => car.model)
+                  .toSet()
+                  .toList()
+                  .map((String car) => DropdownMenuItem(child: Text(car), value: car))
+                  .toList(),
+            ),
+            DropdownButtonFormField(
+                value: _modelEnable,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedCarFuel = newValue;
+                    _modelEnable = newValue;
+                  });
+                },
+                dropdownColor: Colors.blueAccent,
+                items: _cars
+                    .where(
+                        (car) => car.brand == _selectedCarBrand && car.model == _selectedCarModel)
+                    .map((car) => car.fuel)
+                    .toSet()
+                    .toList()
+                    .map((String car) => DropdownMenuItem(child: Text(car), value: car))
+                    .toList()),
+          ]),
+          actions: [ElevatedButton(onPressed: () {}, child: Text("Add"))],
+        ));
   }
 }
