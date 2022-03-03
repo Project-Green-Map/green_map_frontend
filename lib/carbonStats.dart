@@ -2,6 +2,7 @@ import 'package:flutter/animation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:map/help.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CarbonStats extends StatefulWidget {
   const CarbonStats({Key? key}) : super(key: key);
@@ -26,10 +27,11 @@ class _CarbonStatsState extends State<CarbonStats> {
   late double carbonSaved;
   late List<ListTile> tiles;
   late List<dynamic> recommendations;
+  late SharedPreferences prefs;
 
-  _CarbonStatsState() {
-    carbonSaved = 12.2; //TODO: actually implement
-
+  @override
+  void initState(){
+    carbonSaved = 0;
     recommendations = [
       [
         "Reduce car emissions",
@@ -58,20 +60,20 @@ class _CarbonStatsState extends State<CarbonStats> {
       //TODO: add more (the leftmost value is the emissions per kilogram)
     ]
         .map(((List<dynamic> e) => ListTile(
-              title: Text(
-                e[0] as String,
-                style:
-                    const TextStyle(color: Colors.lightBlue, fontSize: 24, fontFamily: 'Quicksand'),
-                textAlign: TextAlign.center,
-              ),
-              subtitle: Text(
-                e[1] as String,
-                textAlign: TextAlign.center,
-              ),
-              leading: Icon(e[2] as IconData, size: 28),
-              minLeadingWidth: 20,
-              contentPadding: const EdgeInsets.all(8.0),
-            )))
+      title: Text(
+        e[0] as String,
+        style:
+        const TextStyle(color: Colors.lightBlue, fontSize: 24, fontFamily: 'Quicksand'),
+        textAlign: TextAlign.center,
+      ),
+      subtitle: Text(
+        e[1] as String,
+        textAlign: TextAlign.center,
+      ),
+      leading: Icon(e[2] as IconData, size: 28),
+      minLeadingWidth: 20,
+      contentPadding: const EdgeInsets.all(8.0),
+    )))
         .toList();
 
     _controller.addListener(() {
@@ -93,6 +95,22 @@ class _CarbonStatsState extends State<CarbonStats> {
       scroll();
     });
   }
+
+  _onStart() async{
+    prefs =  await SharedPreferences.getInstance();
+    setState(() {
+      carbonSaved = prefs.getDouble("savedCarbon")!; //TODO: actually implement
+      carbonSaved /= 1000; // the cached data is stored in g CO2e
+      print("carbonSaved!!!!$carbonSaved");
+    });
+
+  }
+
+  _CarbonStatsState() {
+    _onStart();
+  }
+
+
 
   void scroll() {
     _controller.animateTo(_controller.position.maxScrollExtent,
@@ -144,10 +162,10 @@ class _CarbonStatsState extends State<CarbonStats> {
                         style: TextStyle(fontSize: 32, fontFamily: 'Quicksand'),
                       ),
                     ),
-                    const Align(
+                    Align(
                       child: Text(
-                        "12.2",
-                        style: TextStyle(
+                        carbonSaved.toStringAsFixed(2),
+                        style: const TextStyle(
                             fontSize: 96, color: Colors.lightGreen, fontFamily: 'Quicksand'),
                       ),
                     ),

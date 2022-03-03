@@ -18,8 +18,9 @@ class RouteInfo{
       carbonText = carbon.toStringAsFixed(1) + " g CO2e";
     }
     else {
-      carbon = carbon / 1000;
-      carbonText = carbon.toStringAsFixed(1) + " kg CO2e";
+      double carbonToDisplay = carbon / 1000;
+      // carbon = carbon / 1000;
+      carbonText = carbonToDisplay.toStringAsFixed(1) + " kg CO2e";
     }
     // carbonText = carbon.toStringAsFixed(1) + " CO2e";
 

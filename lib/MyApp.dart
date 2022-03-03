@@ -21,6 +21,10 @@ import './services/geolocator_service.dart';
 import './services/geocoding_service.dart';
 import 'models/route_info.dart';
 
+import 'carbonStats.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -44,6 +48,11 @@ class MapView extends StatefulWidget {
 }
 
 class _MapViewState extends State<MapView> {
+  late SharedPreferences prefs;
+  late double savedCarbon;
+  late double currentRouteCarbon;
+  late bool canClickStart = true;
+
   late GoogleMapController mapController;
 
   late Position _currentPosition;
@@ -177,6 +186,17 @@ class _MapViewState extends State<MapView> {
     //called when the map is finished loading
     print("startupLogic() called");
 
+    prefs = await SharedPreferences.getInstance();
+    if(!prefs.containsKey("savedCarbon")){
+      prefs.setDouble("savedCarbon", 0.0);
+      savedCarbon = 0;
+    }
+    else{
+      savedCarbon = prefs.getDouble("savedCarbon")!;
+    }
+    print("savedCarbon: $savedCarbon");
+
+
     await updateCurrentLocation();
     String? _placeIdTmp = await _geocodingService.getPlaceIdFromCoordinates(
         _currentPosition.latitude, _currentPosition.longitude);
@@ -288,12 +308,16 @@ class _MapViewState extends State<MapView> {
         LatLngBounds(southwest: southwest, northeast: northeast);
     CameraUpdate update = CameraUpdate.newLatLngBounds(bound, 100);
     mapController.animateCamera(update);
+    setState(() {
+      canClickStart = true;
+    });
   }
 
   _updateTravelModeAndRoutes(travelMode) async {
     setState(() {
       _travelMode = travelMode;
       _polylines.clear();
+      _routeInfo.clear();
       // polylineCoordinates.clear();
       for (int i = 0; i < _routeNum; i++) {
         MarkerId tmpId = MarkerId("route_$i");
@@ -452,6 +476,10 @@ class _MapViewState extends State<MapView> {
 
       setState(() {
         _markers[markerId] = marker;
+        _routeInfo[polylineId] = routeInfo[i];
+        if(i == 0){
+          currentRouteCarbon = routeInfo[i].carbon;
+        }
       });
     }
     print("markers created");
@@ -487,6 +515,8 @@ class _MapViewState extends State<MapView> {
           _markers[markerId] = (_markers[markerId]?.copyWith(
             visibleParam: true,
           ))!;
+          currentRouteCarbon = _routeInfo[id]?.carbon;
+          print("currentRouteCarbon: $currentRouteCarbon");
         } else {
           _polylines[id] = (_polylines[id]
               ?.copyWith(colorParam: Colors.grey, zIndexParam: 0))!;
@@ -990,15 +1020,45 @@ class _MapViewState extends State<MapView> {
               ),
             ),
 
+            SafeArea(
+                child: Align(
+                    alignment: FractionalOffset.bottomCenter,
+                    child: Padding(
+                        padding: const EdgeInsets.only(bottom: 10.0),
+                        child: FloatingActionButton(
+                          heroTag: "startBtn",
+                          onPressed: () {
+                            setState(() {
+                              savedCarbon += currentRouteCarbon;
+                              prefs.setDouble("savedCarbon", savedCarbon);
+                              print("savedCarbon: $savedCarbon");
+                              moveCameraToPosition(_startPosition.latitude, _startPosition.longitude, 18);
+                              canClickStart = false;
+                            });
+                            // carbonS_CarbonStatsState.carbonSaved = 0;
+                          },
+                          child: const Text("START"),
+                        )
+                    )
+                )
+            ),
+
             //carbonSaved button
             SafeArea(
               child: Align(
-                alignment: FractionalOffset.bottomCenter,
+                // alignment: FractionalOffset.bottomCenter,
+                alignment: ((_polylines.isNotEmpty || (startAddressFocusNode.hasFocus ||
+                    destinationAddressFocusNode.hasFocus)) && canClickStart) ? FractionalOffset.bottomLeft : FractionalOffset.bottomCenter,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
+                  padding: ((_polylines.isNotEmpty || (startAddressFocusNode.hasFocus ||
+                      destinationAddressFocusNode.hasFocus)) && canClickStart) ?
+                    const EdgeInsets.only(bottom: 60.0, left: 10.0) :
+                    const EdgeInsets.only(bottom: 10.0),
                   child: FloatingActionButton(
                     heroTag: "carbonSavedBtn",
                     backgroundColor: Colors.lightGreen,
+                    mini: ((_polylines.isNotEmpty || (startAddressFocusNode.hasFocus ||
+                        destinationAddressFocusNode.hasFocus)) && canClickStart) ? true : false,
                     onPressed: () => {
                       Navigator.push(
                         context,
@@ -1017,5 +1077,3 @@ class _MapViewState extends State<MapView> {
     );
   }
 }
-
-//TODO: check how much money the Places API is getting through ;)
