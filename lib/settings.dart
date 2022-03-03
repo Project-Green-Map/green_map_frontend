@@ -194,6 +194,7 @@ class _CarSettingsState extends State<CarSettings> {
   String? _selectedCarBrand = null;
   String? _selectedCarModel = null;
   String? _selectedCarFuel = null;
+  String? _modelVal;
 
   _CarSettingsState(this._cars);
 
@@ -208,6 +209,7 @@ class _CarSettingsState extends State<CarSettings> {
             onChanged: (String? newValue) {
               setState(() {
                 _selectedCarBrand = newValue;
+                _modelVal = null;
               });
             },
             items: _cars
@@ -217,19 +219,22 @@ class _CarSettingsState extends State<CarSettings> {
                 .map((String car) => DropdownMenuItem(child: Text(car), value: car))
                 .toList()),
         DropdownButtonFormField(
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedCarModel = newValue;
-              });
-            },
-            dropdownColor: Colors.blueAccent,
-            items: _cars
-                .where((car) => car.brand == _selectedCarBrand)
-                .map((car) => car.model)
-                .toSet()
-                .toList()
-                .map((String car) => DropdownMenuItem(child: Text(car), value: car))
-                .toList())
+          value: _modelVal,
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedCarModel = newValue;
+              _modelVal = newValue;
+            });
+          },
+          dropdownColor: Colors.blueAccent,
+          items: _cars
+              .where((car) => car.brand == _selectedCarBrand)
+              .map((car) => car.model)
+              .toSet()
+              .toList()
+              .map((String car) => DropdownMenuItem(child: Text(car), value: car))
+              .toList(),
+        )
       ]),
     );
   }
