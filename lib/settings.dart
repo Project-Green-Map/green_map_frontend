@@ -36,17 +36,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   List<Car> _cars = [];
   List<Car> _userCars = [
-    Car("Default", "(small)", "PETROL"),
-    Car("Default", "(medium)", "PETROL"),
-    Car("Default", "(large)", "PETROL"),
+    Car.fromSize("small"),
+    Car.fromSize("medium"),
+    Car.fromSize("large"),
   ];
-
-  void _addCarToMap(String brand, String model, String fuel) {
-    setState(() {
-      Car car = Car(brand, model, fuel);
-      _userCars.insert(0, car);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,10 +103,24 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: ListView(children: [
                   SimpleRadioSettingsTile(
                     title: 'Selected car',
-                    settingKey: 'key-car140',
-                    values: _userCars.map((Car c) => c.brand + ' ' + c.model).toList(),
-                    selected: _userCars.first.brand + ' ' + _userCars.first.model,
+                    settingKey: 'key-car190',
+                    values: _userCars.map((Car c) => c.toString()).toList(),
+                    selected: _userCars.first.toString(),
                   ),
+                  Column(
+                      children: _userCars
+                          .map((c) => RadioListTile<String>(
+                                title: Text(c.toString()),
+                                value: c.toString(),
+                                groupValue: _selectedCar,
+                                onChanged: (String? value) {
+                                  setState(() {
+                                    _selectedCar = value!;
+                                    print("should change to " + _selectedCar);
+                                  });
+                                },
+                              ))
+                          .toList()),
                   ListTile(
                     leading: const Icon(Icons.add),
                     trailing: const Icon(
@@ -125,7 +132,17 @@ class _SettingsPageState extends State<SettingsPage> {
                       textAlign: TextAlign.center,
                     ),
                     onTap: () => showDialog(
-                        context: context, builder: (context) => CarSettings(cars: _cars)),
+                        context: context,
+                        builder: (context) => CarSettings(
+                              cars: _cars,
+                              addNewCar: (Car newCar) {
+                                setState(() {
+                                  _userCars.add(newCar);
+                                  _userCars = _userCars.toList();
+                                });
+                                inspect(_userCars);
+                              },
+                            )),
                   ),
                 ]))),
           )
@@ -202,8 +219,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
 class CarSettings extends StatefulWidget {
   List<Car> cars;
+  final ValueSetter<Car> addNewCar;
 
-  CarSettings({Key? key, required this.cars}) : super(key: key);
+  CarSettings({Key? key, required this.cars, required this.addNewCar}) : super(key: key);
 
   @override
   _CarSettingsState createState() => _CarSettingsState(cars);
@@ -221,65 +239,74 @@ class _CarSettingsState extends State<CarSettings> {
 
   @override
   Widget build(BuildContext context) {
-    Size _size = MediaQuery.of(context).size;
-    return Container(
-        height: _size.height / 2,
-        child: AlertDialog(
-          title: Text('Add new car'),
-          content: Column(children: [
-            DropdownButtonFormField(
-                dropdownColor: Colors.blueAccent,
-                //value: _selectedCarBrand,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedCarBrand = newValue;
-                    _brandEnable = null;
-                    _modelEnable = null;
-                  });
-                },
-                items: _cars
-                    .map((Car car) => car.brand)
-                    .toSet()
-                    .toList()
-                    .map((String car) => DropdownMenuItem(child: Text(car), value: car))
-                    .toList()),
-            DropdownButtonFormField(
-              value: _brandEnable,
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedCarModel = newValue;
-                  _brandEnable = newValue;
-                  _modelEnable = null;
-                });
-              },
-              dropdownColor: Colors.blueAccent,
-              items: _cars
-                  .where((car) => car.brand == _selectedCarBrand)
-                  .map((car) => car.model)
-                  .toSet()
-                  .toList()
-                  .map((String car) => DropdownMenuItem(child: Text(car), value: car))
-                  .toList(),
-            ),
-            DropdownButtonFormField(
-                value: _modelEnable,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedCarFuel = newValue;
-                    _modelEnable = newValue;
-                  });
-                },
-                dropdownColor: Colors.blueAccent,
-                items: _cars
-                    .where(
-                        (car) => car.brand == _selectedCarBrand && car.model == _selectedCarModel)
-                    .map((car) => car.fuel)
-                    .toSet()
-                    .toList()
-                    .map((String car) => DropdownMenuItem(child: Text(car), value: car))
-                    .toList()),
-          ]),
-          actions: [ElevatedButton(onPressed: () {}, child: Text("Add"))],
-        ));
+    return AlertDialog(
+      title: Text('Add new car'),
+      content: Column(children: <Widget>[
+        DropdownButtonFormField(
+            dropdownColor: Colors.blueAccent,
+            //value: _selectedCarBrand,
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedCarBrand = newValue;
+                _brandEnable = null;
+                _modelEnable = null;
+              });
+            },
+            items: _cars
+                .map((Car car) => car.brand)
+                .toSet()
+                .toList()
+                .map((String car) => DropdownMenuItem(child: Text(car), value: car))
+                .toList()),
+        DropdownButtonFormField(
+          value: _brandEnable,
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedCarModel = newValue;
+              _brandEnable = newValue;
+              _modelEnable = null;
+            });
+          },
+          dropdownColor: Colors.blueAccent,
+          items: _cars
+              .where((car) => car.brand == _selectedCarBrand)
+              .map((car) => car.model)
+              .toSet()
+              .toList()
+              .map((String car) => DropdownMenuItem(child: Text(car), value: car))
+              .toList(),
+        ),
+        DropdownButtonFormField(
+            value: _modelEnable,
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedCarFuel = newValue;
+                _modelEnable = newValue;
+              });
+            },
+            dropdownColor: Colors.blueAccent,
+            items: _cars
+                .where((car) => car.brand == _selectedCarBrand && car.model == _selectedCarModel)
+                .map((car) => car.fuel)
+                .toSet()
+                .toList()
+                .map((String car) => DropdownMenuItem(child: Text(car), value: car))
+                .toList()),
+      ]),
+      actions: [
+        ElevatedButton(
+            onPressed: () {
+              if (_selectedCarBrand != null &&
+                  _selectedCarModel != null &&
+                  _selectedCarFuel != null) {
+                inspect(Car(_selectedCarBrand!, _selectedCarModel!, _selectedCarFuel!));
+                widget.addNewCar(Car(_selectedCarBrand!, _selectedCarModel!, _selectedCarFuel!));
+              } else
+                null;
+              Navigator.pop(context);
+            },
+            child: Text("Add"))
+      ],
+    );
   }
 }

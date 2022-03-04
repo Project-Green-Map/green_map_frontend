@@ -10,12 +10,12 @@ class Car {
     return Car(
         parsedJson['brand'] as String, parsedJson['model'] as String, parsedJson['fuel'] as String);
   }
-}
 
-class CarsList {
-  final List<Car> cars;
-
-  CarsList(this.cars);
-
-  CarsList.fromJson(Map<String, dynamic> json) : cars = List<Car>.from(json['cars']);
+  @override
+  String toString() {
+    if (this.brand != "")
+      return this.brand + " " + this.model + ", " + this.fuel;
+    else
+      return "Default (" + this.size + ")";
+  }
 }
