@@ -26,61 +26,32 @@ class _SettingsPageState extends State<SettingsPage> {
       _shipEnabled = true;
 
   String _selectedCar = "Default (small)";
-  late Future<void> _singleReadJson;
-
-  @override
-  void initState() {
-    super.initState();
-    _singleReadJson = _readJson();
-  }
-
-  List<Car> _cars = [];
-  List<Car> _userCars = [
-    Car.fromSize("small"),
-    Car.fromSize("medium"),
-    Car.fromSize("large"),
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Settings')),
       body: SafeArea(
-        child: FutureBuilder<void>(
-            future: _singleReadJson,
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              //inspect(_cars);
-              if (snapshot.connectionState == ConnectionState.done) {
-                return ListView(
-                  children: [
-                    SettingsGroup(
-                      title: 'Common',
-                      children: <Widget>[
-                        buildDistanceUnits(),
-                      ],
-                    ),
-                    SettingsGroup(
-                      title: 'Transport',
-                      children: <Widget>[
-                        buildWalking(),
-                        buildCycling(),
-                        buildDriving(),
-                        buildPublicTransport()
-                      ],
-                    )
-                  ],
-                );
-              } else
-                return Center(child: CircularProgressIndicator());
-            }),
-      ),
+          child: ListView(
+        children: [
+          SettingsGroup(
+            title: 'Common',
+            children: <Widget>[
+              buildDistanceUnits(),
+            ],
+          ),
+          SettingsGroup(
+            title: 'Transport',
+            children: <Widget>[
+              buildWalking(),
+              buildCycling(),
+              buildDriving(),
+              buildPublicTransport()
+            ],
+          )
+        ],
+      )),
     );
-  }
-
-  Future<void> _readJson() async {
-    String data = await DefaultAssetBundle.of(context).loadString("lib/assets/data/data2.json");
-    List<dynamic> listJson = jsonDecode(data)['cars'];
-    _cars = listJson.map((element) => Car.fromJson(element)).toList();
   }
 
   Widget buildDriving() {
@@ -91,61 +62,12 @@ class _SettingsPageState extends State<SettingsPage> {
         title: 'Driving',
         onChange: (_) => {_drivingEnabled = !_drivingEnabled},
         childrenIfEnabled: <Widget>[
-          SimpleSettingsTile(
-            title: 'Selected Vehicle',
-            subtitle: _selectedCar,
-            child: Scaffold(
-                appBar: AppBar(
-                  title: Text('Car settings'),
-                  actions: <Widget>[IconButton(onPressed: null, icon: Icon(Icons.edit))],
-                ),
-                body: SafeArea(
-                    child: ListView(children: [
-                  SimpleRadioSettingsTile(
-                    title: 'Selected car',
-                    settingKey: 'key-car190',
-                    values: _userCars.map((Car c) => c.toString()).toList(),
-                    selected: _userCars.first.toString(),
-                  ),
-                  Column(
-                      children: _userCars
-                          .map((c) => RadioListTile<String>(
-                                title: Text(c.toString()),
-                                value: c.toString(),
-                                groupValue: _selectedCar,
-                                onChanged: (String? value) {
-                                  setState(() {
-                                    _selectedCar = value!;
-                                    print("should change to " + _selectedCar);
-                                  });
-                                },
-                              ))
-                          .toList()),
-                  ListTile(
-                    leading: const Icon(Icons.add),
-                    trailing: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                    ),
-                    title: const Text(
-                      'Add car...',
-                      textAlign: TextAlign.center,
-                    ),
-                    onTap: () => showDialog(
-                        context: context,
-                        builder: (context) => CarSettings(
-                              cars: _cars,
-                              addNewCar: (Car newCar) {
-                                setState(() {
-                                  _userCars.add(newCar);
-                                  _userCars = _userCars.toList();
-                                });
-                                inspect(_userCars);
-                              },
-                            )),
-                  ),
-                ]))),
-          )
+          // TODO: selected car needs to be updated
+          ListTile(
+              title: Text('Selected Vehicle'),
+              subtitle: Text(_selectedCar),
+              onTap: () =>
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => CarSettings()))),
         ]);
   }
 
@@ -218,16 +140,118 @@ class _SettingsPageState extends State<SettingsPage> {
 }
 
 class CarSettings extends StatefulWidget {
-  List<Car> cars;
-  final ValueSetter<Car> addNewCar;
-
-  CarSettings({Key? key, required this.cars, required this.addNewCar}) : super(key: key);
-
   @override
-  _CarSettingsState createState() => _CarSettingsState(cars);
+  _CarSettingsState createState() => _CarSettingsState();
 }
 
 class _CarSettingsState extends State<CarSettings> {
+  // TODO: add shared preferences for cars
+  String _selectedCar = "Default (small)";
+  late Future<void> _singleReadJson;
+
+  bool editMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _singleReadJson = _readJson();
+  }
+
+  Future<void> _readJson() async {
+    String data = await DefaultAssetBundle.of(context).loadString("lib/assets/data/data2.json");
+    List<dynamic> listJson = jsonDecode(data)['cars'];
+    _cars = listJson.map((element) => Car.fromJson(element)).toList();
+  }
+
+  List<Car> _cars = [];
+  List<Car> _userCars = [
+    Car.fromSize("small"),
+    Car.fromSize("medium"),
+    Car.fromSize("large"),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('Car settings'),
+          // TODO: add the possibility to delete in edit mode
+          actions: <Widget>[
+            IconButton(
+                onPressed: () => setState(() {
+                      editMode = !editMode;
+                    }),
+                icon: Icon(Icons.edit))
+          ],
+        ),
+        body: FutureBuilder<void>(
+            future: _singleReadJson,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              //inspect(_cars);
+              if (snapshot.connectionState == ConnectionState.done) {
+                return SafeArea(
+                    child: ListView(children: [
+                  SimpleRadioSettingsTile(
+                    title: 'Selected car',
+                    settingKey: 'key-car190',
+                    values: _userCars.map((Car c) => c.toString()).toList(),
+                    selected: _userCars.first.toString(),
+                  ),
+                  /*Column(
+                      children: _userCars
+                          .map((c) => RadioListTile<String>(
+                                title: Text(c.toString()),
+                                value: c.toString(),
+                                groupValue: _selectedCar,
+                                onChanged: (String? value) {
+                                  setState(() {
+                                    _selectedCar = value!;
+                                    print("should change to " + _selectedCar);
+                                  });
+                                },
+                              ))
+                          .toList()),*/
+                  ListTile(
+                    leading: const Icon(Icons.add),
+                    trailing: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                    ),
+                    title: const Text(
+                      'Add car...',
+                      textAlign: TextAlign.center,
+                    ),
+                    onTap: () => showDialog(
+                        context: context,
+                        builder: (context) => NewCarSettings(
+                              cars: _cars,
+                              addNewCar: (Car newCar) {
+                                setState(() {
+                                  _userCars.add(newCar);
+                                  _userCars = _userCars.toList();
+                                });
+                                inspect(_userCars);
+                              },
+                            )),
+                  ),
+                ]));
+              } else
+                return Center(child: CircularProgressIndicator());
+            }));
+  }
+}
+
+class NewCarSettings extends StatefulWidget {
+  List<Car> cars;
+  final ValueSetter<Car> addNewCar;
+
+  NewCarSettings({Key? key, required this.cars, required this.addNewCar}) : super(key: key);
+
+  @override
+  _NewCarSettingsState createState() => _NewCarSettingsState(cars);
+}
+
+class _NewCarSettingsState extends State<NewCarSettings> {
   List<Car> _cars;
   String? _selectedCarBrand = null;
   String? _selectedCarModel = null;
@@ -235,7 +259,7 @@ class _CarSettingsState extends State<CarSettings> {
   String? _brandEnable;
   String? _modelEnable;
 
-  _CarSettingsState(this._cars);
+  _NewCarSettingsState(this._cars);
 
   @override
   Widget build(BuildContext context) {
