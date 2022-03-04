@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 class Car {
   String brand = "", model = "", fuel = "", size = "";
 
@@ -13,9 +11,10 @@ class Car {
 
   @override
   String toString() {
-    if (this.brand != "")
-      return this.brand + " " + this.model + ", " + this.fuel;
-    else
-      return "Default (" + this.size + ")";
+    if (brand != "") {
+      return brand + " " + model + " - " + fuel[0] + fuel.substring(1, fuel.length).toLowerCase();
+    } else {
+      return "Default (" + size + ")";
+    }
   }
 }
