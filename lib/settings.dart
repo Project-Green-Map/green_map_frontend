@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:map/help.dart';
 import 'package:map/services/settings_prefs.dart';
 
 import './models/car.dart';
@@ -61,7 +62,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 buildDriving(),
                 buildPublicTransport()
               ],
-            )
+            ),
+            SettingsGroup(title: "Other", children: [
+              ListTile(
+                title: const Text("Help"),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const Help()),
+                  );
+                },
+              ),
+            ]),
+            const SizedBox(height: 200),
           ],
         ),
       ),
@@ -121,7 +134,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget buildWalking() => SwitchSettingsTile(
       title: 'Walking',
-      leading: const Icon(Icons.add),
+      leading: const Icon(Icons.directions_walk),
       defaultValue: _walkingEnabled,
       settingKey: 'key-walking3',
       onChange: (_) => {_walkingEnabled = !_walkingEnabled});
