@@ -76,6 +76,7 @@ class _CarbonStatsState extends State<CarbonStats> {
     )))
         .toList();
 
+
     _controller.addListener(() {
       var isEnd = _controller.offset + 20 > _controller.position.maxScrollExtent;
       if (isEnd) {
@@ -102,6 +103,32 @@ class _CarbonStatsState extends State<CarbonStats> {
       carbonSaved = prefs.getDouble("savedCarbon")!; //TODO: actually implement
       carbonSaved /= 1000; // the cached data is stored in g CO2e
       print("carbonSaved!!!!$carbonSaved");
+
+      tiles = [
+        //1KG CARBON EQUIVALENTS: 5000 searches, 1 YEAR OF LIGHTBULB,
+        //https://css.umich.edu/factsheets/carbon-footprint-factsheet
+        [(5000 * carbonSaved).toStringAsFixed(0), "Web searches\n", Icons.search],
+        [(365 * carbonSaved).toStringAsFixed(0), "Days using an LED lightbulb", Icons.lightbulb],
+        [(0.17 * carbonSaved).toStringAsFixed(2), "4oz burgers", Icons.fastfood],
+        [(0.05 * carbonSaved).toStringAsFixed(2), "Flights from LHR to JFK", Icons.flight_takeoff]
+        //TODO: add more (the leftmost value is the emissions per kilogram)
+      ]
+          .map(((List<dynamic> e) => ListTile(
+        title: Text(
+          e[0] as String,
+          style:
+          const TextStyle(color: Colors.lightBlue, fontSize: 24, fontFamily: 'Quicksand'),
+          textAlign: TextAlign.center,
+        ),
+        subtitle: Text(
+          e[1] as String,
+          textAlign: TextAlign.center,
+        ),
+        leading: Icon(e[2] as IconData, size: 28),
+        minLeadingWidth: 20,
+        contentPadding: const EdgeInsets.all(8.0),
+      )))
+          .toList();
     });
 
   }

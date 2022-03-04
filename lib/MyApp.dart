@@ -50,8 +50,10 @@ class MapView extends StatefulWidget {
 class _MapViewState extends State<MapView> {
   late SharedPreferences prefs;
   late double savedCarbon;
-  late double currentRouteCarbon;
+  // late double currentRouteCarbon;
+  late RouteInfo currentRouteInfo;
   late bool canClickStart = true;
+
 
   late GoogleMapController mapController;
 
@@ -478,7 +480,8 @@ class _MapViewState extends State<MapView> {
         _markers[markerId] = marker;
         _routeInfo[polylineId] = routeInfo[i];
         if(i == 0){
-          currentRouteCarbon = routeInfo[i].carbon;
+          currentRouteInfo = routeInfo[i];
+          // currentRouteCarbon = routeInfo[i].carbon;
         }
       });
     }
@@ -515,8 +518,9 @@ class _MapViewState extends State<MapView> {
           _markers[markerId] = (_markers[markerId]?.copyWith(
             visibleParam: true,
           ))!;
-          currentRouteCarbon = _routeInfo[id]?.carbon;
-          print("currentRouteCarbon: $currentRouteCarbon");
+          currentRouteInfo = (_routeInfo[id])!;
+          // currentRouteCarbon = _routeInfo[id]?.carbon;
+          print("currentRouteCarbon: $currentRouteInfo.carbon");
         } else {
           _polylines[id] = (_polylines[id]
               ?.copyWith(colorParam: Colors.grey, zIndexParam: 0))!;
@@ -1029,10 +1033,16 @@ class _MapViewState extends State<MapView> {
                           heroTag: "startBtn",
                           onPressed: () {
                             setState(() {
-                              savedCarbon += currentRouteCarbon;
+                              double carAverage = 175.62 * currentRouteInfo.distance;
+                              print("car carbon: $carAverage");
+                              double currentCarbon = currentRouteInfo.carbon + 0.0;
+                              print("currentRoute carbon: $currentCarbon");
+                              double tmpSaved = carAverage - currentCarbon;
+                              print("saved: $tmpSaved");
+                              savedCarbon += tmpSaved;
                               prefs.setDouble("savedCarbon", savedCarbon);
                               print("savedCarbon: $savedCarbon");
-                              moveCameraToPosition(_startPosition.latitude, _startPosition.longitude, 18);
+                              moveCameraToPosition(_startPosition.latitude, _startPosition.longitude, 16);
                               canClickStart = false;
                             });
                             // carbonS_CarbonStatsState.carbonSaved = 0;
