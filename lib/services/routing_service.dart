@@ -46,8 +46,13 @@ class RoutingService {
         print("All routes have been retrieved");
         break;
       }
+      dynamic _carbon = json['carbon'][i];
+      if (_carbon is int) {
+        _carbon = _carbon.toDouble();
+      }
+
       String encodedRoute = json['routes'][i]['overview_polyline']['points'];
-      RouteInfo routeInfo = RouteInfo.fromJson(json['routes'][i], json['carbon'][i]);
+      RouteInfo routeInfo = RouteInfo.fromJson(json['routes'][i], _carbon);
       encodedRoutes[encodedRoute] = routeInfo;
     }
     return encodedRoutes;
