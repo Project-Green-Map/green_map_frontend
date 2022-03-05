@@ -7,8 +7,6 @@ import 'package:map/services/api_manager.dart';
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
 
-
-
 class RoutingService {
   // final polylinePoints = PolylinePoints();
   APIManager apiManager = APIManager();
@@ -36,8 +34,7 @@ class RoutingService {
     print(uri);
 
     http.Response encodedString = await http.post(uri,
-        headers: <String, String> {"Content-Type": "application/json"},
-        body: vehicleInfo);
+        headers: <String, String>{"Content-Type": "application/json"}, body: vehicleInfo);
     String response = encodedString.body;
     var json = convert.jsonDecode(response);
 

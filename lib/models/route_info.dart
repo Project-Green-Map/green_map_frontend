@@ -1,11 +1,11 @@
-class RouteInfo{
+class RouteInfo {
   final String timeText;
   double distance;
   // int distance;
   // int time;
   late String carbonText;
   late String distanceText;
-  late dynamic carbon;
+  late double carbon;
 
   RouteInfo({
     // required this.distanceText,
@@ -13,11 +13,10 @@ class RouteInfo{
     required this.timeText,
     // required this.time,
     required this.carbon,
-  }){
-    if(carbon < 1000){
+  }) {
+    if (carbon < 1000) {
       carbonText = carbon.toStringAsFixed(1) + " g CO2e";
-    }
-    else {
+    } else {
       double carbonToDisplay = carbon / 1000;
       // carbon = carbon / 1000;
       carbonText = carbonToDisplay.toStringAsFixed(1) + " kg CO2e";
@@ -28,7 +27,7 @@ class RouteInfo{
     distanceText = distance.toStringAsFixed(1) + " km";
   }
 
-  factory RouteInfo.fromJson(Map<dynamic, dynamic> routesJson, dynamic _carbon){
+  factory RouteInfo.fromJson(Map<dynamic, dynamic> routesJson, double _carbon) {
     double _distance = routesJson["legs"][0]["distance"]["value"].toDouble();
     // String _distanceText = routesJson["legs"][0]["distance"]["text"];
     String _timeText = routesJson["legs"][0]["duration"]["text"];
