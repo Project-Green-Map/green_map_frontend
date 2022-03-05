@@ -970,59 +970,63 @@ class _MapViewState extends State<MapView> {
               ),
             ),
 
-            SafeArea(
+            //start route button
+            if (_polylines.isNotEmpty && canClickStart)
+              SafeArea(
                 child: Align(
-                    alignment: FractionalOffset.bottomCenter,
-                    child: Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: FloatingActionButton(
-                          heroTag: "startBtn",
-                          onPressed: () {
-                            setState(() {
-                              double carAverage = 175.62 * currentRouteInfo.distance;
-                              print("car carbon: $carAverage");
-                              double currentCarbon = currentRouteInfo.carbon + 0.0;
-                              print("currentRoute carbon: $currentCarbon");
-                              double tmpSaved = carAverage - currentCarbon;
-                              print("saved: $tmpSaved");
-                              savedCarbon += tmpSaved;
-                              prefs.setDouble("savedCarbon", savedCarbon);
-                              print("savedCarbon: $savedCarbon");
-                              moveCameraToPosition(
-                                  _startPosition.latitude, _startPosition.longitude, 16);
-                              canClickStart = false;
-                            });
-                            // carbonS_CarbonStatsState.carbonSaved = 0;
-                          },
-                          child: const Text("START"),
-                        )))),
+                  alignment: FractionalOffset.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 15.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20.0),
+                        color: Colors.blue,
+                      ),
+                      width: width / 3,
+                      height: height / 10,
+                      child: IconButton(
+                        color: Colors.white,
+                        iconSize: 40.0,
+                        onPressed: () {
+                          setState(() {
+                            double carAverage = 175.62 * currentRouteInfo.distance;
+                            print("car carbon: $carAverage");
+                            double currentCarbon = currentRouteInfo.carbon + 0.0;
+                            print("currentRoute carbon: $currentCarbon");
+                            double tmpSaved = carAverage - currentCarbon;
+                            print("saved: $tmpSaved");
+                            savedCarbon += tmpSaved;
+                            prefs.setDouble("savedCarbon", savedCarbon);
+                            print("savedCarbon: $savedCarbon");
+                            moveCameraToPosition(
+                                _startPosition.latitude, _startPosition.longitude, 16);
+                            canClickStart = false;
+                          });
+                          // carbonS_CarbonStatsState.carbonSaved = 0;
+                        },
+                        icon: const Icon(Icons.play_arrow),
+                        //child: const Text("START"),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
 
             //carbonSaved button
             SafeArea(
               child: Align(
                 // alignment: FractionalOffset.bottomCenter,
-                alignment: ((_polylines.isNotEmpty ||
-                            (startAddressFocusNode.hasFocus ||
-                                destinationAddressFocusNode.hasFocus)) &&
-                        canClickStart)
+                alignment: (_polylines.isNotEmpty && canClickStart)
                     ? FractionalOffset.bottomLeft
                     : FractionalOffset.bottomCenter,
                 child: Padding(
-                  padding: ((_polylines.isNotEmpty ||
-                              (startAddressFocusNode.hasFocus ||
-                                  destinationAddressFocusNode.hasFocus)) &&
-                          canClickStart)
+                  padding: (_polylines.isNotEmpty && canClickStart)
                       ? const EdgeInsets.only(bottom: 60.0, left: 10.0)
                       : const EdgeInsets.only(bottom: 10.0),
                   child: FloatingActionButton(
                     heroTag: "carbonSavedBtn",
                     backgroundColor: Colors.lightGreen,
-                    mini: ((_polylines.isNotEmpty ||
-                                (startAddressFocusNode.hasFocus ||
-                                    destinationAddressFocusNode.hasFocus)) &&
-                            canClickStart)
-                        ? true
-                        : false,
+                    mini: (_polylines.isNotEmpty && canClickStart) ? true : false,
                     onPressed: () => {
                       Navigator.push(
                         context,
