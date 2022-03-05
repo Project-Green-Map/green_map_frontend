@@ -13,13 +13,14 @@ import 'package:map/models/place.dart';
 import 'package:map/models/place_search.dart';
 import 'package:map/services/places_service.dart';
 import 'package:map/services/routing_service.dart';
-import 'package:map/settings.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 import 'dart:math' show max, min;
 
 import './services/geolocator_service.dart';
 import './services/geocoding_service.dart';
 import 'models/route_info.dart';
+import 'settings.dart';
 
 import 'carbonStats.dart';
 
@@ -102,6 +103,8 @@ class _MapViewState extends State<MapView> {
 
   Map<PolylineId, Polyline> _polylines = {};
   Map<PolylineId, RouteInfo> _routeInfo = {};
+
+  String _distanceUnits = 'km';
 
   _MapViewState() {
     startAddressFocusNode.addListener(() {
@@ -697,6 +700,7 @@ class _MapViewState extends State<MapView> {
   Widget build(BuildContext context) {
     var height = MediaQuery.of(context).size.height;
     var width = MediaQuery.of(context).size.width;
+
     return GestureDetector(
       onTap: () {
         print("Detected tab.");
@@ -939,6 +943,18 @@ class _MapViewState extends State<MapView> {
                             itemCount: min(3, searchResults.length),
                             //TODO: do we need more than 3?
                           ),
+                        //TODO: how to display things based on the changes from settings
+                        /*ValueChangeObserver(
+                            cacheKey: 'key-distance',
+                            defaultValue: 'km',
+                            builder: (_, _distanceUnits, __) => Center(
+                                    child: Container(
+                                  margin: const EdgeInsets.all(10.0),
+                                  color: Colors.amber[600],
+                                  width: 48.0,
+                                  height: 48.0,
+                                  child: Text(Settings.getValue('key-distance', 'km')),
+                                )))*/
                       ],
                     ),
                   ),
@@ -961,7 +977,7 @@ class _MapViewState extends State<MapView> {
                     onPressed: () => {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => Settings()),
+                        MaterialPageRoute(builder: (context) => SettingsPage()),
                       ),
                     },
                     child: const Icon(Icons.settings),
