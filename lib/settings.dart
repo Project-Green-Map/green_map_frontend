@@ -9,7 +9,8 @@ import 'package:map/services/settings_prefs.dart';
 import './models/car.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({Key? key}) : super(key: key);
+  final Function? onClose;
+  const SettingsPage({Key? key, this.onClose}) : super(key: key);
 
   @override
   _SettingsPageState createState() => _SettingsPageState();
@@ -39,6 +40,12 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     currentVehicleFutureObtained = getVehicleFuture();
+  }
+
+  @override
+  void deactivate() {
+    if (widget.onClose != null) widget.onClose?.call();
+    super.deactivate();
   }
 
   @override
@@ -133,11 +140,15 @@ class _SettingsPageState extends State<SettingsPage> {
       );
 
   Widget buildWalking() => SwitchSettingsTile(
-      title: 'Walking',
-      leading: const Icon(Icons.directions_walk),
-      defaultValue: _walkingEnabled,
-      settingKey: 'key-walking3',
-      onChange: (_) => {_walkingEnabled = !_walkingEnabled});
+        title: 'Walking',
+        leading: const Icon(Icons.directions_walk),
+        defaultValue: _walkingEnabled,
+        settingKey: 'key-walking3',
+        onChange: (value) {
+          _walkingEnabled = !_walkingEnabled;
+          //debugPrint('KEY-WALKING3: $value');
+        },
+      );
 
   Widget buildCycling() => SwitchSettingsTile(
         title: 'Cycling',
@@ -155,17 +166,20 @@ class _SettingsPageState extends State<SettingsPage> {
         onChange: (_) => {_publicTransportEnabled = !_publicTransportEnabled},
         childrenIfEnabled: [
           SwitchSettingsTile(
-              title: 'Bus',
-              leading: const Icon(Icons.directions_bus),
-              settingKey: 'key-public-transport-bus2',
-              defaultValue: _busEnabled,
-              onChange: (_) => _busEnabled = !_busEnabled),
+            title: 'Bus',
+            leading: const Icon(Icons.directions_bus),
+            settingKey: 'key-public-transport-bus2',
+            defaultValue: _busEnabled,
+            onChange: (_) => _busEnabled = !_busEnabled,
+            enabled: false,
+          ),
           SwitchSettingsTile(
             title: 'Train',
             leading: const Icon(Icons.directions_train),
             settingKey: 'key-public-transport-train2',
             defaultValue: _trainEnabled,
             onChange: (_) => _trainEnabled = !_trainEnabled,
+            enabled: false,
           ),
           SwitchSettingsTile(
             title: 'Tram',
@@ -173,6 +187,7 @@ class _SettingsPageState extends State<SettingsPage> {
             settingKey: 'key-public-transport-tram2',
             defaultValue: _tramEnabled,
             onChange: (_) => _tramEnabled = !_tramEnabled,
+            enabled: false,
           ),
           SwitchSettingsTile(
             title: 'Underground',
@@ -180,6 +195,7 @@ class _SettingsPageState extends State<SettingsPage> {
             settingKey: 'key-public-transport-underground2',
             defaultValue: _undergroundEnabled,
             onChange: (_) => _undergroundEnabled = !_undergroundEnabled,
+            enabled: false,
           ),
           SwitchSettingsTile(
             title: 'Ship',
@@ -187,6 +203,7 @@ class _SettingsPageState extends State<SettingsPage> {
             settingKey: 'key-public-transport-ship2',
             defaultValue: _shipEnabled,
             onChange: (_) => _shipEnabled = !_shipEnabled,
+            enabled: false,
           )
         ],
       );

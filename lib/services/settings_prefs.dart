@@ -1,3 +1,4 @@
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:map/models/car.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -71,5 +72,14 @@ class SettingsPrefs {
   String _carToString(Car car) {
     //doesn't use Car.toString() as potentially ambiguous spacing
     return car.brand + '\n' + car.model + '\n' + car.fuel + '\n' + car.size;
+  }
+
+  List<TravelMode> getTravelModes() {
+    List<TravelMode> list = [];
+    if (_prefs.getBool('key-walking3') ?? true) list.add(TravelMode.walking);
+    if (_prefs.getBool('key-cycling3') ?? true) list.add(TravelMode.bicycling);
+    if (_prefs.getBool('key-driving5') ?? true) list.add(TravelMode.driving);
+    if (_prefs.getBool('key-public-transport3') ?? true) list.add(TravelMode.transit);
+    return list;
   }
 }

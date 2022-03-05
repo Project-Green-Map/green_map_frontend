@@ -14,6 +14,7 @@ import 'package:map/models/place_search.dart';
 import 'package:map/services/places_service.dart';
 import 'package:map/services/routing_service.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:map/services/settings_prefs.dart';
 
 import 'dart:math' show max, min;
 
@@ -96,6 +97,9 @@ class _MapViewState extends State<MapView> {
   Map<MarkerId, Marker> _markers = {};
 
   late BitmapDescriptor customIcon;
+  late List<Widget> selectedTransports;
+
+  final SettingsPrefs settings = SettingsPrefs();
 
   // late PolylinePoints polylinePoints;
   // List<LatLng> polylineCoordinates = [];
@@ -120,6 +124,20 @@ class _MapViewState extends State<MapView> {
         searchPlaces(destinationAddressController.text);
         print("DESTINATION ADDRESS CLICKED");
       }
+    });
+    initSettings();
+  }
+
+  void initSettings() async {
+    await settings.onStart();
+    setState(() {
+      selectedTransports = settings.getTravelModes().map(((e) => makeTravelModeButton(e))).toList();
+    });
+  }
+
+  void updateSelectedTransports() {
+    setState(() {
+      selectedTransports = settings.getTravelModes().map(((e) => makeTravelModeButton(e))).toList();
     });
   }
 
@@ -657,7 +675,7 @@ class _MapViewState extends State<MapView> {
     );
   }
 
-  swapStartAndDestionation() {
+  swapStartAndDestination() {
     setState(() async {
       String tmpAddress = _startAddress;
       _startAddress = _destinationAddress;
@@ -889,7 +907,7 @@ class _MapViewState extends State<MapView> {
                                   FloatingActionButton(
                                     heroTag: "revertBtn",
                                     mini: true,
-                                    onPressed: () => {swapStartAndDestionation()},
+                                    onPressed: () => {swapStartAndDestination()},
                                     child: const Icon(Icons.change_circle),
                                     ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
                                   ),
@@ -906,12 +924,10 @@ class _MapViewState extends State<MapView> {
                                     !startAddressFocusNode.hasFocus &&
                                     !destinationAddressFocusNode.hasFocus)
                                   //row containing transit options
-                                  Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                                    makeTravelModeButton(TravelMode.walking),
-                                    makeTravelModeButton(TravelMode.transit),
-                                    makeTravelModeButton(TravelMode.driving),
-                                    makeTravelModeButton(TravelMode.bicycling)
-                                  ]),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: selectedTransports,
+                                  ),
                               ],
                             ),
                           ),
@@ -977,7 +993,11 @@ class _MapViewState extends State<MapView> {
                     onPressed: () => {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => SettingsPage()),
+                        MaterialPageRoute(
+                          builder: (context) => SettingsPage(
+                            onClose: updateSelectedTransports,
+                          ),
+                        ),
                       ),
                     },
                     child: const Icon(Icons.settings),
