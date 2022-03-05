@@ -30,7 +30,7 @@ class _CarbonStatsState extends State<CarbonStats> {
   late SharedPreferences prefs;
 
   @override
-  void initState(){
+  void initState() {
     carbonSaved = 0;
     recommendations = [
       [
@@ -60,22 +60,21 @@ class _CarbonStatsState extends State<CarbonStats> {
       //TODO: add more (the leftmost value is the emissions per kilogram)
     ]
         .map(((List<dynamic> e) => ListTile(
-      title: Text(
-        e[0] as String,
-        style:
-        const TextStyle(color: Colors.lightBlue, fontSize: 24, fontFamily: 'Quicksand'),
-        textAlign: TextAlign.center,
-      ),
-      subtitle: Text(
-        e[1] as String,
-        textAlign: TextAlign.center,
-      ),
-      leading: Icon(e[2] as IconData, size: 28),
-      minLeadingWidth: 20,
-      contentPadding: const EdgeInsets.all(8.0),
-    )))
+              title: Text(
+                e[0] as String,
+                style:
+                    const TextStyle(color: Colors.lightBlue, fontSize: 24, fontFamily: 'Quicksand'),
+                textAlign: TextAlign.center,
+              ),
+              subtitle: Text(
+                e[1] as String,
+                textAlign: TextAlign.center,
+              ),
+              leading: Icon(e[2] as IconData, size: 28),
+              minLeadingWidth: 20,
+              contentPadding: const EdgeInsets.all(8.0),
+            )))
         .toList();
-
 
     _controller.addListener(() {
       var isEnd = _controller.offset + 20 > _controller.position.maxScrollExtent;
@@ -97,8 +96,8 @@ class _CarbonStatsState extends State<CarbonStats> {
     });
   }
 
-  _onStart() async{
-    prefs =  await SharedPreferences.getInstance();
+  _onStart() async {
+    prefs = await SharedPreferences.getInstance();
     setState(() {
       carbonSaved = prefs.getDouble("savedCarbon")!; //TODO: actually implement
       carbonSaved /= 1000; // the cached data is stored in g CO2e
@@ -114,30 +113,27 @@ class _CarbonStatsState extends State<CarbonStats> {
         //TODO: add more (the leftmost value is the emissions per kilogram)
       ]
           .map(((List<dynamic> e) => ListTile(
-        title: Text(
-          e[0] as String,
-          style:
-          const TextStyle(color: Colors.lightBlue, fontSize: 24, fontFamily: 'Quicksand'),
-          textAlign: TextAlign.center,
-        ),
-        subtitle: Text(
-          e[1] as String,
-          textAlign: TextAlign.center,
-        ),
-        leading: Icon(e[2] as IconData, size: 28),
-        minLeadingWidth: 20,
-        contentPadding: const EdgeInsets.all(8.0),
-      )))
+                title: Text(
+                  e[0] as String,
+                  style: const TextStyle(
+                      color: Colors.lightBlue, fontSize: 24, fontFamily: 'Quicksand'),
+                  textAlign: TextAlign.center,
+                ),
+                subtitle: Text(
+                  e[1] as String,
+                  textAlign: TextAlign.center,
+                ),
+                leading: Icon(e[2] as IconData, size: 28),
+                minLeadingWidth: 20,
+                contentPadding: const EdgeInsets.all(8.0),
+              )))
           .toList();
     });
-
   }
 
   _CarbonStatsState() {
     _onStart();
   }
-
-
 
   void scroll() {
     _controller.animateTo(_controller.position.maxScrollExtent,
@@ -276,22 +272,23 @@ class _CarbonStatsState extends State<CarbonStats> {
                               child: SizedBox(
                                 height: height / 8,
                                 child: ListTile(
-                                    title: Text(
-                                      recommendations[index][0] as String,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    subtitle: Text(
-                                      recommendations[index][1] as String,
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    leading: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      children: [
-                                        Icon(recommendations[index][2] as IconData,
-                                            color: Colors.lightGreen),
-                                      ],
-                                    )),
+                                  title: Text(
+                                    recommendations[index][0] as String,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  subtitle: Text(
+                                    recommendations[index][1] as String,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  leading: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Icon(recommendations[index][2] as IconData,
+                                          color: Colors.lightGreen),
+                                    ],
+                                  ),
+                                ),
                               ),
                             );
                           }),

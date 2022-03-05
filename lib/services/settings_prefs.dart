@@ -82,4 +82,8 @@ class SettingsPrefs {
     if (_prefs.getBool('key-public-transport3') ?? true) list.add(TravelMode.transit);
     return list;
   }
+
+  String getDistanceUnit() {
+    return _prefs.getString('key-distance') ?? 'km';
+  }
 }

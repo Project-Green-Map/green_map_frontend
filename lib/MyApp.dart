@@ -110,6 +110,15 @@ class _MapViewState extends State<MapView> {
 
   String _distanceUnits = 'km';
 
+  final Map<TravelMode, String> travelModeToStringPretty = {
+    //do not merge this with the one in routing_service. this is the prettified version, and
+    //is not compatible with the names used in the google maps api query.
+    TravelMode.driving: "Driving",
+    TravelMode.walking: "Walking",
+    TravelMode.bicycling: "Cycling",
+    TravelMode.transit: "Transit"
+  };
+
   _MapViewState() {
     startAddressFocusNode.addListener(() {
       if (startAddressFocusNode.hasFocus) {
@@ -447,6 +456,15 @@ class _MapViewState extends State<MapView> {
     return BitmapDescriptor.fromBytes(data);
   }
 
+  String mapToSelectedDistanceUnit(String str) {
+    //input string: "xxxx.x km"
+    String requiredDistance = settings.getDistanceUnit();
+    if (requiredDistance == 'km') return str;
+    List<String> parts = str.split(' ');
+    double val = double.parse(parts[0]);
+    return (val * 0.621371).toStringAsFixed(2) + ' miles';
+  }
+
   Future<void> createMarkersForEachRoute(
       Map<PolylineId, Polyline> polylineMap, List<RouteInfo> routeInfo) async {
     print("createMarkersForEachRoute() called");
@@ -461,11 +479,12 @@ class _MapViewState extends State<MapView> {
       LatLng? middlePoint = polylineMap[polylineId]?.points[(length! / 3).floor()];
       middlePoint ??= _startPosition;
 
-      BitmapDescriptor bitmapDescriptor = await createCustomMarkerBitmap(routeInfo[i].distanceText +
-          "\n" +
-          routeInfo[i].timeText +
-          "\n" +
-          routeInfo[i].carbonText);
+      BitmapDescriptor bitmapDescriptor = await createCustomMarkerBitmap(
+          mapToSelectedDistanceUnit(routeInfo[i].distanceText) +
+              "\n" +
+              routeInfo[i].timeText +
+              "\n" +
+              routeInfo[i].carbonText);
       MarkerId markerId = MarkerId(polylineId.value);
       Marker marker = Marker(
         markerId: markerId,
@@ -650,7 +669,7 @@ class _MapViewState extends State<MapView> {
   ElevatedButton makeTravelModeButton(TravelMode travelMode) {
     return ElevatedButton(
       child: Text(
-        travelMode.name,
+        travelModeToStringPretty[travelMode] ?? 'unknown',
         style: const TextStyle(
           fontSize: 14,
           // color: Colors.blueGrey,
