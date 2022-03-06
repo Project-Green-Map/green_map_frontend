@@ -37,7 +37,7 @@ class _HelpState extends State<Help> {
           "having more easily, we use the equivalent amount of carbon dioxide that "
           "would be emitted to have the same environmental impact as all the different "
           "greenhouse gases combined.",
-    )
+    ),
   ];
 
   @override
@@ -66,7 +66,8 @@ class _HelpState extends State<Help> {
                 headerBuilder: ((context, isExpanded) => ListTile(
                       title: Text(
                         i.headerText,
-                        style: const TextStyle(fontSize: 24, fontFamily: "Quicksand", color: Colors.lightBlue),
+                        style: const TextStyle(
+                            fontSize: 24, fontFamily: "Quicksand", color: Colors.lightBlue),
                         textAlign: TextAlign.center,
                       ),
                       dense: true,

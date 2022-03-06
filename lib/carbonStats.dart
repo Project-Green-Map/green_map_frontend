@@ -104,12 +104,27 @@ class _CarbonStatsState extends State<CarbonStats> {
       print("carbonSaved!!!!$carbonSaved");
 
       tiles = [
-        //1KG CARBON EQUIVALENTS: 5000 searches, 1 YEAR OF LIGHTBULB,
-        //https://css.umich.edu/factsheets/carbon-footprint-factsheet
+        /*1KG CARBON EQUIVALENTS: 5000 searches, 1 YEAR OF LIGHTBULB,
+        https://css.umich.edu/factsheets/carbon-footprint-factsheet
+        phones: https://reboxed.co/blogs/outsidethebox/the-carbon-footprint-of-your-phone-and-how-you-can-reduce-it
+        jeans: https://www.bbc.com/future/article/20200310-sustainable-fashion-how-to-buy-clothes-good-for-the-climate
+        */
         [(5000 * carbonSaved).toStringAsFixed(0), "Web searches\n", Icons.search],
         [(365 * carbonSaved).toStringAsFixed(0), "Days using an LED lightbulb", Icons.lightbulb],
+        [
+          (17.2 * carbonSaved).toStringAsFixed(2),
+          "Hours using a modern phone",
+          Icons.phone_android
+        ],
+        [(2 * carbonSaved).toStringAsFixed(2), "Pints of beer", Icons.sports_bar],
+        [((1 / 3.5) * carbonSaved).toStringAsFixed(2), "KGs plastic", Icons.category_rounded],
         [(0.17 * carbonSaved).toStringAsFixed(2), "4oz burgers", Icons.fastfood],
-        [(0.05 * carbonSaved).toStringAsFixed(2), "Flights from LHR to JFK", Icons.flight_takeoff]
+        [((1 / 33.4) * carbonSaved).toStringAsFixed(2), "Pairs of jeans", Icons.checkroom_rounded],
+        [
+          ((1 / 587) * carbonSaved).toStringAsFixed(3),
+          "Flights from LHR to JFK",
+          Icons.flight_takeoff
+        ],
         //TODO: add more (the leftmost value is the emissions per kilogram)
       ]
           .map(((List<dynamic> e) => ListTile(
@@ -192,20 +207,53 @@ class _CarbonStatsState extends State<CarbonStats> {
                             fontSize: 96, color: Colors.lightGreen, fontFamily: 'Quicksand'),
                       ),
                     ),
-                    Align(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Text(
-                            "kilograms CO₂e!",
-                            style: TextStyle(
-                                fontSize: 32,
-                                color: Colors.lightGreen,
-                                fontFamily: 'Quicksand',
-                                height: 0.6),
+                    Stack(
+                      children: [
+                        Align(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Text(
+                                "kilograms CO₂e!",
+                                style: TextStyle(
+                                    fontSize: 32,
+                                    color: Colors.lightGreen,
+                                    fontFamily: 'Quicksand',
+                                    height: 0.6),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        Row(
+                          children: [
+                            SizedBox(width: width * 0.75),
+                            TextButton(
+                              child: const Text(
+                                "(?)",
+                                style: TextStyle(
+                                  fontSize: 18.0,
+                                  color: Colors.transparent,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black38,
+                                      offset: Offset(0, -5),
+                                    ),
+                                  ],
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Colors.black38,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const Help()),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 60),
                     const Align(
@@ -298,42 +346,6 @@ class _CarbonStatsState extends State<CarbonStats> {
                   ],
                 ),
               ),
-            ),
-            Column(
-              children: [
-                const SizedBox(height: 280),
-                Row(
-                  children: [
-                    const SizedBox(width: 310),
-                    TextButton(
-                      child: const Text(
-                        "(?)",
-                        style: TextStyle(
-                            fontSize: 18.0,
-                            color: Colors.transparent,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black38,
-                                offset: Offset(0, -5),
-                              )
-                            ],
-                            decoration: TextDecoration.underline,
-                            decorationColor: Colors.black38),
-                        textAlign: TextAlign.center,
-                      ),
-                      //style: ButtonStyle(
-                      //backgroundColor: MaterialStateProperty.all(Colors.black12),
-                      //shape: MaterialStateProperty.all(const CircleBorder())),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const Help()),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ],
             ),
             Align(
               //needs to be on top of everything, so last entry in the stack list

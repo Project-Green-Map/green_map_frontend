@@ -88,7 +88,8 @@ class _MapViewState extends State<MapView> {
   final _routingService = RoutingService();
   final _placesService = PlacesService();
 
-  late TravelMode _travelMode = TravelMode.driving;
+  late TravelMode _travelMode;
+  bool _travelModeSet = false;
 
   List<PlaceSearch> searchResults = [];
   final polylinePoints = PolylinePoints();
@@ -203,7 +204,8 @@ class _MapViewState extends State<MapView> {
     super.initState();
 
     // make sure to initialize before map loading
-    BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(4, 4)), 'assets/images/car.png')
+    BitmapDescriptor.fromAssetImage(
+            const ImageConfiguration(size: Size(4, 4)), 'assets/images/car.png')
         .then((d) {
       customIcon = d;
     });
@@ -239,24 +241,6 @@ class _MapViewState extends State<MapView> {
         _startPosition.latitude, _startPosition.longitude);
 
     await moveCameraToCurrentLocation();
-    // await _createPolyline_debug();
-    // print("_createPolyline_debug() called");
-    // Marker marker = Marker(
-    //     markerId: MarkerId('Byron Burger'),
-    //     position: _destinationPosition,
-    //     infoWindow: InfoWindow(
-    //       title: 'Byron Burger',
-    //       snippet: '12 Bridge St, Cambridge CB2 1UF',
-    //     ));
-    // setState(() {
-    //   _markers.add(marker);
-    // });
-    // await _createPolylines(
-    //     _startPosition?.latitude ?? -1,
-    //     _startPosition?.latitude ?? -1,
-    //     _destinationPosition.latitude,
-    //     _destinationPosition.longitude,
-    //     _travelMode);
   }
 
   //in an effort to save API requests, only call when necessary
@@ -264,7 +248,7 @@ class _MapViewState extends State<MapView> {
     await _geolocatorService.getCurrentLocation().then((position) async {
       setState(() {
         _currentPosition = position;
-        print('CURRENT POS: $_currentPosition');
+        debugPrint('CURRENT POS: $_currentPosition');
       });
       await _updateCurrentAddress();
     });
@@ -311,7 +295,7 @@ class _MapViewState extends State<MapView> {
   }
 
   resetCameraVisibleRegion() async {
-    // only called after startPlaceId and destionationPlaceId are set
+    // only called after startPlaceId and destinationPlaceId are set
     if (_startPlaceId == "" || _destinationPlaceId == "") {
       return;
     }
@@ -334,10 +318,11 @@ class _MapViewState extends State<MapView> {
 
   _updateTravelModeAndRoutes(travelMode) async {
     setState(() {
+      _travelModeSet = true;
       _travelMode = travelMode;
       _polylines.clear();
       _routeInfo.clear();
-      // polylineCoordinates.clear();
+      updateSelectedTransports();
       for (int i = 0; i < _routeNum; i++) {
         MarkerId tmpId = MarkerId("route_$i");
         if (_markers.containsKey(tmpId)) {
@@ -467,7 +452,7 @@ class _MapViewState extends State<MapView> {
 
   Future<void> createMarkersForEachRoute(
       Map<PolylineId, Polyline> polylineMap, List<RouteInfo> routeInfo) async {
-    print("createMarkersForEachRoute() called");
+    debugPrint("createMarkersForEachRoute() called");
 
     // Map<PolylineId, Marker> markersMap = {};
     for (int i = 0; i < routeInfo.length; i++) {
@@ -546,73 +531,6 @@ class _MapViewState extends State<MapView> {
     });
   }
 
-  // _createPolylines_debug(double startLatitude, double startLongitude, double destinationLatitude,
-  //     double destinationLongitude, TravelMode travelMode) async {
-  //
-  //
-  //
-  //   PolylineResult result;
-  //   if (_startPlaceId == '' || _destinationPlaceId == '') {
-  //     print("(WARN) Sending coordinates to API, not placeID...");
-  //     result = await _routingService.getRouteFromCoordinates_debug(
-  //         startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
-  //   } else {
-  //     result = await _routingService.getRouteFromPlaceId_debug(
-  //         _startPlaceId, _destinationPlaceId, travelMode);
-  //   }
-  //
-  //   if (result.status == 'OK') {
-  //     // if (result.points.isNotEmpty) {
-  //     // int len = result.points.length;
-  //     // int cnt = 0;
-  //     for (var point in result.points) {
-  //       polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-  //       // cnt ++;
-  //       // if (cnt == len / 2){
-  //       //
-  //       // }
-  //     }
-  //   }
-  //
-  //   setState(() {
-  //     _polylines.add(Polyline(
-  //       width: 5,
-  //       polylineId: PolylineId('route_1'),
-  //       color: Colors.red,
-  //       points: polylineCoordinates,
-  //     ));
-  //   });
-  //
-  //   print("Polylines (debug) computed");
-  // }
-
-  // // Create the polylines for showing the route between two places
-  // _createPolylines(double startLatitude, double startLongitude, double destinationLatitude,
-  //     double destinationLongitude, TravelMode travelMode) async {
-  //   print("_createPolylines() called");
-  //
-  //   PolylineResult result = await _routingService.getRouteFromCoordinates(
-  //       startLatitude, startLongitude, destinationLatitude, destinationLongitude, travelMode);
-  //
-  //   if (result.status == 'OK') {
-  //     // if (result.points.isNotEmpty) {
-  //     for (var point in result.points) {
-  //       polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-  //     }
-  //   }
-  //
-  //   setState(() {
-  //     _polylines.add(Polyline(
-  //       width: 5,
-  //       polylineId: PolylineId('route_1'),
-  //       color: Colors.red,
-  //       points: polylineCoordinates,
-  //     ));
-  //   });
-  //
-  //   print("Polylines computed");
-  // }
-
   searchPlaces(String searchTerm) async {
     searchResults = (searchTerm.isEmpty)
         ? _placesService.getRecentSearches()
@@ -634,12 +552,6 @@ class _MapViewState extends State<MapView> {
         _startAddress = place.name;
         _startPosition = place.geometry.latLng;
         _startPlaceId = placeId;
-        // Marker marker = Marker(
-        //   markerId: const MarkerId('start'),
-        //   position: _startPosition,
-        // );
-        // _markers.remove(marker.markerId);
-        // _markers[marker.markerId] = marker;
       });
     } else if (activeAddressController == "dest") {
       destinationAddressController.text = place.name;
@@ -672,12 +584,13 @@ class _MapViewState extends State<MapView> {
         travelModeToStringPretty[travelMode] ?? 'unknown',
         style: const TextStyle(
           fontSize: 14,
-          // color: Colors.blueGrey,
           color: Colors.white,
         ),
       ),
       style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all<Color>(Colors.blueAccent.shade100),
+          backgroundColor: (_travelModeSet && _travelMode == travelMode)
+              ? MaterialStateProperty.all<Color>(Colors.blue)
+              : MaterialStateProperty.all<Color>(Colors.blueAccent.shade100),
           overlayColor: MaterialStateProperty.resolveWith((states) {
             return states.contains(MaterialState.pressed) ? Colors.blueAccent.shade400 : null;
           }),
@@ -689,13 +602,13 @@ class _MapViewState extends State<MapView> {
             // ),
           ))),
       onPressed: () {
-        _updateTravelModeAndRoutes(travelMode);
+        if (!_travelModeSet || _travelMode != travelMode) _updateTravelModeAndRoutes(travelMode);
       },
     );
   }
 
   swapStartAndDestination() {
-    setState(() async {
+    setState(() {
       String tmpAddress = _startAddress;
       _startAddress = _destinationAddress;
       _destinationAddress = tmpAddress;
@@ -718,7 +631,7 @@ class _MapViewState extends State<MapView> {
       );
       _markers.remove(marker.markerId);
       _markers[marker.markerId] = marker;
-      await _updateTravelModeAndRoutes(_travelMode);
+      if (_travelModeSet) _updateTravelModeAndRoutes(_travelMode);
     });
   }
 
