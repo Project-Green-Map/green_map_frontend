@@ -26,7 +26,7 @@ class RoutingService {
     String? travelModeString = travelModeToString[travelMode];
 
     Uri uri =
-        Uri.parse("https://us-central1-gifted-pillar-339221.cloudfunctions.net/api-channel-dev?"
+        Uri.parse("https://europe-west2-gifted-pillar-339221.cloudfunctions.net/api?"
             "origin=place_id:$startPlaceId"
             "&destination=place_id:$destinationPlaceId"
             "&mode=$travelModeString");
