@@ -115,12 +115,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   parentSettingsPrefs.currentCarInUse,
                   textAlign: TextAlign.center,
                 ),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CarSettings(updateParent: rebuildParent),
-                  ),
-                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CarSettings(updateParent: rebuildParent),
+                    ),
+                  );
+                },
               ),
             ],
           );
@@ -244,7 +246,8 @@ class _CarSettingsState extends State<CarSettings> {
   }
 
   Future<void> _readJson() async {
-    String data = await DefaultAssetBundle.of(context).loadString("lib/assets/data/data2.json");
+    String data =
+        await DefaultAssetBundle.of(context).loadString("lib/assets/data/frontend_data.json");
     List<dynamic> listJson = jsonDecode(data)['cars'];
     _cars = listJson.map((element) => Car.fromJson(element)).toList();
   }
@@ -283,7 +286,15 @@ class _CarSettingsState extends State<CarSettings> {
                     settingKey: 'key-car190',
                     values: settingsPrefs.userCars.map((Car c) => c.toString()).toList(),
                     selected: settingsPrefs.currentCarInUse,
-                    onChange: (newCar) => settingsPrefs.setCurrentCar(newCar),
+                    onChange: (newCar) {
+                      settingsPrefs.setCurrentCar(newCar);
+                      settingsPrefs.setCurrentCarIndex(
+                        settingsPrefs.userCars
+                            .map((Car c) => c.toString())
+                            .toList()
+                            .indexOf(newCar),
+                      );
+                    },
                   ),
                   ListTile(
                     leading: const Icon(Icons.add),

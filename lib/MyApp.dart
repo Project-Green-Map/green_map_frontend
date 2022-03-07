@@ -10,6 +10,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart'; //only use for Position objects. add functionality via geolocator_service.dart
 import 'package:map/carbonStats.dart';
+import 'package:map/models/car.dart';
 import 'package:map/models/place.dart';
 import 'package:map/models/place_search.dart';
 import 'package:map/services/places_service.dart';
@@ -351,13 +352,17 @@ class _MapViewState extends State<MapView> {
   _createMultiplePolylines(startPlaceId, destinationPlaceId, travelMode, val) async {
     print("_createMultiplePolylines() called");
 
-    var vehicleInfoSample = await rootBundle
-        .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
-    print(vehicleInfoSample);
+    //var vehicleInfoSample = await rootBundle
+    //    .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
+    //print(vehicleInfoSample);
+
+    Car car = settings.getCurrentCar();
+
+    String vehicleInfoJSON = car.toJSON();
 
     Map<String, RouteInfo> encodedRoutes = await _routingService
         .getMultipleEncodedRoutesFromPlaceId(startPlaceId, destinationPlaceId, travelMode, val,
-            vehicleInfo: vehicleInfoSample);
+            vehicleInfo: vehicleInfoJSON);
     // List<String> encodedRoutes =
     //     await _routingService.getMultipleEncodedRoutesFromPlaceId(
     //         startPlaceId, destinationPlaceId, travelMode, val);

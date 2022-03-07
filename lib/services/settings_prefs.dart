@@ -37,6 +37,7 @@ class SettingsPrefs {
       _prefs.setStringList('userCars', _defaultCarList.map((e) => _carToString(e)).toList());
       _prefs.setString('currentCarInUse', _defaultCar.toString());
       _prefs.setBool('settingsPrefExists', true);
+      _prefs.setInt('currentCarIndex', 1);
 
       userCars = _defaultCarList;
       currentCarInUse = _defaultCar.toString();
@@ -52,6 +53,7 @@ class SettingsPrefs {
   void addCar(Car car) {
     userCars.insert(0, car);
     _prefs.setStringList('userCars', userCars.map((e) => _carToString(e)).toList());
+    _prefs.setInt('currentCarIndex', _prefs.getInt('currentCarIndex') ?? 1 + 1);
   }
 
   void setCurrentCar(String carStr) {
@@ -85,5 +87,14 @@ class SettingsPrefs {
 
   String getDistanceUnit() {
     return _prefs.getString('key-distance') ?? 'km';
+  }
+
+  Car getCurrentCar() {
+    int index = _prefs.getInt('currentCarIndex') ?? 1;
+    return userCars[index];
+  }
+
+  void setCurrentCarIndex(int i) {
+    _prefs.setInt('currentCarIndex', i);
   }
 }
