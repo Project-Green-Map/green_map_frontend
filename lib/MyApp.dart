@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -742,6 +743,7 @@ class _MapViewState extends State<MapView> {
               initialCameraPosition: cambridgePosition,
               myLocationEnabled: true,
               myLocationButtonEnabled: false,
+              mapToolbarEnabled: true,
               onMapCreated: (GoogleMapController controller) {
                 mapController = controller;
                 startupLogic(); // This logic ensures the map always loads before trying to move the camera, which itself has a currentPosition
@@ -755,7 +757,9 @@ class _MapViewState extends State<MapView> {
               child: Align(
                 alignment: FractionalOffset.bottomRight,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 105.0, right: 9.0),
+                  padding: Platform.isIOS ?
+                  const EdgeInsets.only(bottom: 10.0,right: 9.0):
+                  const EdgeInsets.only(bottom: 105.0, right: 9.0),
                   child: Container(
                     width: 43,
                     height: 43,
