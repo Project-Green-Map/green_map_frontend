@@ -1,31 +1,47 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:map/models/car.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPrefs {
-  late SharedPreferences _prefs;
-  late List<Car> userCars;
-  late String currentCarInUse;
+  static late SharedPreferences _prefs;
+  static late List<Car> userCars;
+  static late String currentCarInUse;
 
-  final Car _defaultCar = Car.fromSize('medium');
-  final List<Car> _defaultCarList = [
+  static final Car _defaultCar = Car.fromSize('medium');
+  static final List<Car> _defaultCarList = [
     Car.fromSize('small'),
     Car.fromSize('medium'),
     Car.fromSize('large'),
   ];
 
-  List<Car> get getAllCars => userCars + _defaultCarList;
+  factory() => SettingsPrefs._internal();
+  SettingsPrefs._internal();
+
+  static List<Car> get getAllCars =>
+      (_prefs.getStringList('userCars') ?? [])
+          .map((String car) => Car.fromJson(jsonDecode(car)))
+          .toList() +
+      _defaultCarList;
+
+  static List<Car> get getUserCars => (_prefs.getStringList('userCars') ?? [])
+      .map((String car) => Car.fromJson(jsonDecode(car)))
+      .toList();
+  static String get getCurrentCarInUse =>
+      _prefs.getString('currentCarInUse') ?? _defaultCar.toString();
 
   /*SettingsPrefs() {
     _onStart(); // moved this call to inside settings.dart to force the values being set before use
   }*/
 
-  Future<void> onStart() async {
+  static Future<void> onStart() async {
     _prefs = await SharedPreferences.getInstance();
 
     bool prefsExist = _prefs.getBool('settingsPrefExists') ?? false;
+
+    //_prefs.clear();
 
     if (prefsExist) {
       //load locally stored preferences
@@ -44,32 +60,33 @@ class SettingsPrefs {
     }
   }
 
-  void reupdate() {
+  /*void reupdate() {
     userCars = (_prefs.getStringList('userCars') ?? [])
         .map((String car) => Car.fromJson(jsonDecode(car)))
         .toList();
     currentCarInUse = _prefs.getString('currentCarInUse') ?? _defaultCar.toString();
-  }
+  }*/
 
-  void addCar(Car car) {
+  static set addCar(Car car) {
     userCars.insert(0, car);
     _prefs.setStringList('userCars', userCars.map((e) => jsonEncode(e.toJson())).toList());
   }
 
-  void deleteCar(Car car) {
+  static set deleteCar(Car car) {
     if (car.toString() == currentCarInUse) {
-      setCurrentCar(_defaultCar.toString());
+      currentCarInUse = _defaultCar.toString();
+      _prefs.setString('currentCarInUse', _defaultCar.toString());
     }
     userCars.remove(car);
     _prefs.setStringList('userCars', userCars.map((e) => jsonEncode(e.toJson())).toList());
   }
 
-  void setCurrentCar(String carStr) {
+  static set setCurrentCar(String carStr) {
     currentCarInUse = carStr;
     _prefs.setString('currentCarInUse', carStr);
   }
 
-  List<TravelMode> getTravelModes() {
+  static List<TravelMode> getTravelModes() {
     List<TravelMode> list = [];
     if (_prefs.getBool('key-walking') ?? true) list.add(TravelMode.walking);
     if (_prefs.getBool('key-cycling') ?? true) list.add(TravelMode.bicycling);
@@ -78,7 +95,7 @@ class SettingsPrefs {
     return list;
   }
 
-  String getDistanceUnit() {
+  static String getDistanceUnit() {
     return _prefs.getString('key-distance') ?? 'km';
   }
 }

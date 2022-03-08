@@ -100,7 +100,7 @@ class _MapViewState extends State<MapView> {
   late BitmapDescriptor customIcon;
   late List<Widget> selectedTransports;
 
-  final SettingsPrefs settings = SettingsPrefs();
+  //final SettingsPrefs settings = SettingsPrefs;
 
   // late PolylinePoints polylinePoints;
   // List<LatLng> polylineCoordinates = [];
@@ -139,15 +139,17 @@ class _MapViewState extends State<MapView> {
   }
 
   void initSettings() async {
-    await settings.onStart();
+    await SettingsPrefs.onStart();
     setState(() {
-      selectedTransports = settings.getTravelModes().map(((e) => makeTravelModeButton(e))).toList();
+      selectedTransports =
+          SettingsPrefs.getTravelModes().map(((e) => makeTravelModeButton(e))).toList();
     });
   }
 
   void updateSelectedTransports() {
     setState(() {
-      selectedTransports = settings.getTravelModes().map(((e) => makeTravelModeButton(e))).toList();
+      selectedTransports =
+          SettingsPrefs.getTravelModes().map(((e) => makeTravelModeButton(e))).toList();
     });
   }
 
@@ -443,7 +445,7 @@ class _MapViewState extends State<MapView> {
 
   String mapToSelectedDistanceUnit(String str) {
     //input string: "xxxx.x km"
-    String requiredDistance = settings.getDistanceUnit();
+    String requiredDistance = SettingsPrefs.getDistanceUnit();
     if (requiredDistance == 'km') return str;
     List<String> parts = str.split(' ');
     double val = double.parse(parts[0]);
