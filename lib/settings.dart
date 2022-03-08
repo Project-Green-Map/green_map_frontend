@@ -265,8 +265,12 @@ class _CarSettingsState extends State<CarSettings> {
                       ? null
                       : [
                           IconButton(
-                            onPressed: () => Navigator.push(context,
-                                MaterialPageRoute(builder: (context) => deleteCar(settingsPrefs))),
+                            onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => DeleteCar(
+                                          settingsPrefs: settingsPrefs,
+                                        ))),
                             icon: const Icon(Icons.edit),
                           ),
                         ],
@@ -279,7 +283,7 @@ class _CarSettingsState extends State<CarSettings> {
                         //subtitle: settingsPrefs.currentCarInUse,
                         settingKey: 'key-car',
                         values: settingsPrefs.getAllCars.map((Car c) => c.toString()).toList(),
-                        selected: settingsPrefs.getCurrentCarInUse,
+                        selected: settingsPrefs.currentCarInUse,
                         onChange: (newCar) => settingsPrefs.setCurrentCar(newCar),
                       ),
                       ListTile(
@@ -299,7 +303,8 @@ class _CarSettingsState extends State<CarSettings> {
                             addNewCar: (Car newCar) {
                               setState(() {
                                 settingsPrefs.addCar(newCar);
-                                // settingsPrefs.setCurrentCar(newCar.toString()); //! this would be better included but can't seem to change the radiobutton automatically
+                                settingsPrefs.setCurrentCar(newCar
+                                    .toString()); //! this would be better included but can't seem to change the radiobutton automatically
                                 widget.updateParent.call();
                               });
                               // inspect(settingsPrefs.userCars);
@@ -419,8 +424,10 @@ class _NewCarSettingsState extends State<NewCarSettings> {
             if (_selectedCarBrand != null &&
                 _selectedCarModel != null &&
                 _selectedCarFuel != null) {
-              inspect(Car(_selectedCarBrand!, _selectedCarModel!, _selectedCarFuel!));
-              widget.addNewCar(Car(_selectedCarBrand!, _selectedCarModel!, _selectedCarFuel!));
+              setState(() {
+                widget.addNewCar(Car(_selectedCarBrand!, _selectedCarModel!, _selectedCarFuel!));
+              });
+              // widget.addNewCar(Car(_selectedCarBrand!, _selectedCarModel!, _selectedCarFuel!));
             }
             widget.onFinish.call();
             Navigator.pop(context);
@@ -432,9 +439,9 @@ class _NewCarSettingsState extends State<NewCarSettings> {
   }
 }
 
-class deleteCar extends StatelessWidget {
+class DeleteCar extends StatelessWidget {
   SettingsPrefs settingsPrefs;
-  deleteCar(this.settingsPrefs);
+  DeleteCar({Key? key, required this.settingsPrefs}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

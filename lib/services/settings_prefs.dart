@@ -1,11 +1,10 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:map/models/car.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SettingsPrefs extends ChangeNotifier {
+class SettingsPrefs {
   late SharedPreferences _prefs;
   late List<Car> userCars;
   late String currentCarInUse;
@@ -18,7 +17,6 @@ class SettingsPrefs extends ChangeNotifier {
   ];
 
   List<Car> get getAllCars => userCars + _defaultCarList;
-  String get getCurrentCarInUse => _prefs.getString(currentCarInUse) ?? _defaultCar.toString();
 
   /*SettingsPrefs() {
     _onStart(); // moved this call to inside settings.dart to force the values being set before use
@@ -26,8 +24,6 @@ class SettingsPrefs extends ChangeNotifier {
 
   Future<void> onStart() async {
     _prefs = await SharedPreferences.getInstance();
-
-    //_prefs.clear();
 
     bool prefsExist = _prefs.getBool('settingsPrefExists') ?? false;
 
