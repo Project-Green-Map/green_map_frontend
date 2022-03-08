@@ -684,9 +684,9 @@ class _MapViewState extends State<MapView> {
               child: Align(
                 alignment: FractionalOffset.bottomRight,
                 child: Padding(
-                  padding: Platform.isIOS ?
-                  const EdgeInsets.only(bottom: 10.0,right: 9.0):
-                  const EdgeInsets.only(bottom: 105.0, right: 9.0),
+                  padding: Platform.isIOS
+                      ? const EdgeInsets.only(bottom: 10.0, right: 9.0)
+                      : const EdgeInsets.only(bottom: 105.0, right: 9.0),
                   child: Container(
                     width: 43,
                     height: 43,
@@ -776,6 +776,7 @@ class _MapViewState extends State<MapView> {
                                                   position: _destinationPosition);
                                               _markers[marker.markerId] = marker;
                                               print("polylines cleared");
+                                              _travelModeSet = false;
                                             });
                                             await moveCameraToPosition(
                                                 _destinationPosition.latitude,

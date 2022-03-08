@@ -44,6 +44,8 @@ class SettingsPrefs {
     }
   }
 
+  //TODO: fix blue button and carbon request not updating when changing car
+
   void reupdate() {
     userCars =
         (_prefs.getStringList('userCars') ?? []).map((String car) => _stringToCar(car)).toList();
