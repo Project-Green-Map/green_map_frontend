@@ -891,18 +891,6 @@ class _MapViewState extends State<MapView> {
                             itemCount: min(3, searchResults.length),
                             //TODO: do we need more than 3?
                           ),
-                        //TODO: how to display things based on the changes from settings
-                        /*ValueChangeObserver(
-                            cacheKey: 'key-distance',
-                            defaultValue: 'km',
-                            builder: (_, _distanceUnits, __) => Center(
-                                    child: Container(
-                                  margin: const EdgeInsets.all(10.0),
-                                  color: Colors.amber[600],
-                                  width: 48.0,
-                                  height: 48.0,
-                                  child: Text(Settings.getValue('key-distance', 'km')),
-                                )))*/
                       ],
                     ),
                   ),

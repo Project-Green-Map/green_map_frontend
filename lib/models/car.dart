@@ -9,6 +9,10 @@ class Car {
         parsedJson['brand'] as String, parsedJson['model'] as String, parsedJson['fuel'] as String);
   }
 
+  Map<String, dynamic> toJson() {
+    return {"brand": brand, "model": model, "fuel": fuel, "size": size};
+  }
+
   @override
   String toString() {
     if (brand != "") {

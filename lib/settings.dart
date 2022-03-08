@@ -21,13 +21,13 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _drivingEnabled = true,
       _walkingEnabled = true,
       _publicTransportEnabled = true,
-      _cyclingEnabled = true,
-      _busEnabled = true,
+      _cyclingEnabled = true;
+  /*bool _busEnabled = true,
       _tramEnabled = true,
       _trainEnabled = true,
       _undergroundEnabled = true,
       _shipEnabled = true;
-
+  */
   SettingsPrefs parentSettingsPrefs = SettingsPrefs();
 
   late Future<void> currentVehicleFutureObtained;
@@ -101,7 +101,7 @@ class _SettingsPageState extends State<SettingsPage> {
         if (snapshot.connectionState == ConnectionState.done) {
           return SwitchSettingsTile(
             leading: const Icon(Icons.directions_car_outlined),
-            settingKey: 'key-driving5',
+            settingKey: 'key-driving',
             defaultValue: _drivingEnabled,
             title: 'Driving',
             onChange: (_) => {_drivingEnabled = !_drivingEnabled},
@@ -143,10 +143,9 @@ class _SettingsPageState extends State<SettingsPage> {
         title: 'Walking',
         leading: const Icon(Icons.directions_walk),
         defaultValue: _walkingEnabled,
-        settingKey: 'key-walking3',
+        settingKey: 'key-walking',
         onChange: (value) {
           _walkingEnabled = !_walkingEnabled;
-          //debugPrint('KEY-WALKING3: $value');
         },
       );
 
@@ -154,7 +153,7 @@ class _SettingsPageState extends State<SettingsPage> {
         title: 'Cycling',
         leading: const Icon(Icons.directions_bike),
         defaultValue: _cyclingEnabled,
-        settingKey: 'key-cycling3',
+        settingKey: 'key-cycling',
         onChange: (_) => {_cyclingEnabled = !_cyclingEnabled},
       );
 
@@ -162,13 +161,13 @@ class _SettingsPageState extends State<SettingsPage> {
         title: 'Public Transport',
         leading: const Icon(Icons.directions_bus),
         defaultValue: _publicTransportEnabled,
-        settingKey: 'key-public-transport3',
+        settingKey: 'key-public-transport',
         onChange: (_) => {_publicTransportEnabled = !_publicTransportEnabled},
-        childrenIfEnabled: [
+        /*childrenIfEnabled: [
           SwitchSettingsTile(
             title: 'Bus',
             leading: const Icon(Icons.directions_bus),
-            settingKey: 'key-public-transport-bus2',
+            settingKey: 'key-public-transport-bus',
             defaultValue: _busEnabled,
             onChange: (_) => _busEnabled = !_busEnabled,
             enabled: false,
@@ -176,7 +175,7 @@ class _SettingsPageState extends State<SettingsPage> {
           SwitchSettingsTile(
             title: 'Train',
             leading: const Icon(Icons.directions_train),
-            settingKey: 'key-public-transport-train2',
+            settingKey: 'key-public-transport-train',
             defaultValue: _trainEnabled,
             onChange: (_) => _trainEnabled = !_trainEnabled,
             enabled: false,
@@ -184,7 +183,7 @@ class _SettingsPageState extends State<SettingsPage> {
           SwitchSettingsTile(
             title: 'Tram',
             leading: const Icon(Icons.directions_train_rounded),
-            settingKey: 'key-public-transport-tram2',
+            settingKey: 'key-public-transport-tram',
             defaultValue: _tramEnabled,
             onChange: (_) => _tramEnabled = !_tramEnabled,
             enabled: false,
@@ -192,7 +191,7 @@ class _SettingsPageState extends State<SettingsPage> {
           SwitchSettingsTile(
             title: 'Underground',
             leading: const Icon(Icons.directions_subway),
-            settingKey: 'key-public-transport-underground2',
+            settingKey: 'key-public-transport-underground',
             defaultValue: _undergroundEnabled,
             onChange: (_) => _undergroundEnabled = !_undergroundEnabled,
             enabled: false,
@@ -200,12 +199,12 @@ class _SettingsPageState extends State<SettingsPage> {
           SwitchSettingsTile(
             title: 'Ship',
             leading: const Icon(Icons.directions_boat),
-            settingKey: 'key-public-transport-ship2',
+            settingKey: 'key-public-transport-ship',
             defaultValue: _shipEnabled,
             onChange: (_) => _shipEnabled = !_shipEnabled,
             enabled: false,
           )
-        ],
+        ],*/
       );
 }
 
@@ -221,8 +220,6 @@ class CarSettings extends StatefulWidget {
 class _CarSettingsState extends State<CarSettings> {
   late Future<void> _areFuturesInitialised;
   SettingsPrefs settingsPrefs = SettingsPrefs();
-
-  bool editMode = false;
 
   List<Car> _cars = [];
 
@@ -257,69 +254,67 @@ class _CarSettingsState extends State<CarSettings> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Car settings'),
-        // TODO: add the possibility to delete in edit mode
-        actions: <Widget>[
-          IconButton(
-            onPressed: () => setState(() {
-              editMode = !editMode;
-            }),
-            icon: const Icon(Icons.edit),
-          ),
-        ],
-      ),
-      body: FutureBuilder<void>(
+    return FutureBuilder<void>(
         future: _areFuturesInitialised,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            return SafeArea(
-              child: ListView(
-                children: [
-                  SimpleRadioSettingsTile(
-                    title: 'Select Car',
-                    //subtitle: settingsPrefs.currentCarInUse,
-                    settingKey: 'key-car190',
-                    values: settingsPrefs.userCars.map((Car c) => c.toString()).toList(),
-                    selected: settingsPrefs.currentCarInUse,
-                    onChange: (newCar) => settingsPrefs.setCurrentCar(newCar),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.add),
-                    trailing: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                    ),
-                    title: const Text(
-                      'Add car...',
-                      textAlign: TextAlign.center,
-                    ),
-                    onTap: () => showDialog(
-                      context: context,
-                      builder: (context) => NewCarSettings(
-                        cars: _cars,
-                        addNewCar: (Car newCar) {
-                          setState(() {
-                            settingsPrefs.addCar(newCar);
-                            // settingsPrefs.setCurrentCar(newCar.toString()); //! this would be better included but can't seem to change the radiobutton automatically
-                            widget.updateParent.call();
-                          });
-                          inspect(settingsPrefs.userCars);
-                        },
-                        onFinish: rebuildChild,
+            return Scaffold(
+                appBar: AppBar(
+                  title: const Text('Car settings'),
+                  actions: settingsPrefs.userCars == []
+                      ? null
+                      : [
+                          IconButton(
+                            onPressed: () => Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => deleteCar(settingsPrefs))),
+                            icon: const Icon(Icons.edit),
+                          ),
+                        ],
+                ),
+                body: SafeArea(
+                  child: ListView(
+                    children: [
+                      SimpleRadioSettingsTile(
+                        title: 'Select Car',
+                        //subtitle: settingsPrefs.currentCarInUse,
+                        settingKey: 'key-car',
+                        values: settingsPrefs.getAllCars.map((Car c) => c.toString()).toList(),
+                        selected: settingsPrefs.getCurrentCarInUse,
+                        onChange: (newCar) => settingsPrefs.setCurrentCar(newCar),
                       ),
-                    ),
+                      ListTile(
+                        leading: const Icon(Icons.add),
+                        trailing: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                        ),
+                        title: const Text(
+                          'Add car',
+                          textAlign: TextAlign.center,
+                        ),
+                        onTap: () => showDialog(
+                          context: context,
+                          builder: (context) => NewCarSettings(
+                            cars: _cars,
+                            addNewCar: (Car newCar) {
+                              setState(() {
+                                settingsPrefs.addCar(newCar);
+                                // settingsPrefs.setCurrentCar(newCar.toString()); //! this would be better included but can't seem to change the radiobutton automatically
+                                widget.updateParent.call();
+                              });
+                              // inspect(settingsPrefs.userCars);
+                            },
+                            onFinish: rebuildChild,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
+                ));
           } else {
             return const Center(child: CircularProgressIndicator());
           }
-        },
-      ),
-    );
+        });
   }
 }
 
@@ -434,5 +429,34 @@ class _NewCarSettingsState extends State<NewCarSettings> {
         )
       ],
     );
+  }
+}
+
+class deleteCar extends StatelessWidget {
+  SettingsPrefs settingsPrefs;
+  deleteCar(this.settingsPrefs);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(title: const Text('Delete car')),
+        body: SafeArea(
+            child: ListView.separated(
+          shrinkWrap: true,
+          // default cars can't be deleted
+          itemCount: settingsPrefs.userCars.length,
+          itemBuilder: (BuildContext context, int index) {
+            return ListTile(
+                trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    color: Colors.red,
+                    onPressed: () {
+                      settingsPrefs.deleteCar(settingsPrefs.userCars[index]);
+                      Navigator.pop(context);
+                    }),
+                title: Text(settingsPrefs.userCars[index].toString()));
+          },
+          separatorBuilder: (BuildContext context, int index) => const Divider(),
+        )));
   }
 }
