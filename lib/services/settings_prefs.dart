@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SettingsPrefs {
   static late SharedPreferences _prefs;
   static late List<Car> userCars;
-  static late String currentCarInUse;
+  static late Car currentCarInUse;
 
   static final Car _defaultCar = Car.fromSize('medium');
   static final List<Car> _defaultCarList = [
@@ -29,8 +29,9 @@ class SettingsPrefs {
   static List<Car> get getUserCars => (_prefs.getStringList('userCars') ?? [])
       .map((String car) => Car.fromJson(jsonDecode(car)))
       .toList();
-  static String get getCurrentCarInUse =>
-      _prefs.getString('currentCarInUse') ?? _defaultCar.toString();
+  static Car get getCurrentCarInUse => _prefs.getString('currentCarInUse') == null
+      ? Car.fromJson(_prefs.getString('currentCarInUse'))
+      : _defaultCar;
 
   /*SettingsPrefs() {
     _onStart(); // moved this call to inside settings.dart to force the values being set before use
@@ -39,25 +40,22 @@ class SettingsPrefs {
   static Future<void> onStart() async {
     _prefs = await SharedPreferences.getInstance();
 
-    bool prefsExist = _prefs.getBool('settingsPrefExists') ?? false;
-
-    //_prefs.clear();
-
-    if (prefsExist) {
+    if (_prefs != null) {
       //load locally stored preferences
+      print("load seetings....");
       userCars = (_prefs.getStringList('userCars') ?? [])
           .map((String car) => Car.fromJson(jsonDecode(car)))
           .toList();
-      currentCarInUse = _prefs.getString('currentCarInUse') ?? _defaultCar.toString();
+      print(_prefs.getString('currentCarInUse'));
+      currentCarInUse = Car.fromJson(jsonDecode(_prefs.getString('currentCarInUse')!));
     } else {
+      print("first load...");
       //first run, so generate local settings
       _prefs.setStringList('userCars', []);
-      _prefs.setString('currentCarInUse', _defaultCar.toString());
-      _prefs.setBool('settingsPrefExists', true);
-      _prefs.setInt('currentCarIndex', 1);
+      _prefs.setString('currentCarInUse', _defaultCar.toJSON());
 
       userCars = [];
-      currentCarInUse = _defaultCar.toString();
+      currentCarInUse = _defaultCar;
     }
   }
 
@@ -71,22 +69,22 @@ class SettingsPrefs {
   static set addCar(Car car) {
     if (!userCars.contains(car)) {
       userCars.insert(0, car);
-      _prefs.setStringList('userCars', userCars.map((e) => jsonEncode(e.toJson())).toList());
+      _prefs.setStringList('userCars', userCars.map((e) => e.toJSON()).toList());
     }
   }
 
   static set deleteCar(Car car) {
-    if (car.toString() == currentCarInUse) {
-      currentCarInUse = _defaultCar.toString();
-      _prefs.setString('currentCarInUse', _defaultCar.toString());
+    if (car == currentCarInUse) {
+      currentCarInUse = _defaultCar;
+      _prefs.setString('currentCarInUse', _defaultCar.toJSON());
     }
     userCars.remove(car);
-    _prefs.setStringList('userCars', userCars.map((e) => jsonEncode(e.toJson())).toList());
+    _prefs.setStringList('userCars', userCars.map((e) => e.toJSON()).toList());
   }
 
-  static set setCurrentCar(String carStr) {
-    currentCarInUse = carStr;
-    _prefs.setString('currentCarInUse', carStr);
+  static set setCurrentCar(Car car) {
+    currentCarInUse = car;
+    _prefs.setString('currentCarInUse', car.toJSON());
   }
 
   static List<TravelMode> getTravelModes() {
@@ -100,14 +98,5 @@ class SettingsPrefs {
 
   static String getDistanceUnit() {
     return _prefs.getString('key-distance') ?? 'km';
-  }
-
-  Car getCurrentCar() {
-    int index = _prefs.getInt('currentCarIndex') ?? 1;
-    return userCars[index];
-  }
-
-  void setCurrentCarIndex(int i) {
-    _prefs.setInt('currentCarIndex', i);
   }
 }

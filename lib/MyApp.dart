@@ -138,15 +138,12 @@ class _MapViewState extends State<MapView> {
         print("DESTINATION ADDRESS CLICKED");
       }
     });
-    initSettings();
+    // initSettings();
   }
+  late Future<void> loadSettings;
 
-  void initSettings() async {
+  Future<void> initSettings() async {
     await SettingsPrefs.onStart();
-    setState(() {
-      selectedTransports =
-          SettingsPrefs.getTravelModes().map(((e) => makeTravelModeButton(e))).toList();
-    });
   }
 
   void updateSelectedTransports() {
@@ -214,7 +211,7 @@ class _MapViewState extends State<MapView> {
         .then((d) {
       customIcon = d;
     });
-
+    loadSettings = initSettings();
     // _destinationPosition = LatLng(52.207099555585565, 0.1130482077789624);
     print("initState() called");
   }
@@ -359,9 +356,7 @@ class _MapViewState extends State<MapView> {
     //    .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
     //print(vehicleInfoSample);
 
-    Car car = settings.getCurrentCar();
-
-    String vehicleInfoJSON = car.toJSON();
+    String vehicleInfoJSON = SettingsPrefs.getCurrentCarInUse.toJSON();
 
     Map<String, RouteInfo> encodedRoutes = await _routingService
         .getMultipleEncodedRoutesFromPlaceId(startPlaceId, destinationPlaceId, travelMode, val,
@@ -666,350 +661,369 @@ class _MapViewState extends State<MapView> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        body: Stack(
-          children: <Widget>[
-            GoogleMap(
-              mapType: MapType.normal,
-              initialCameraPosition: cambridgePosition,
-              myLocationEnabled: true,
-              myLocationButtonEnabled: false,
-              mapToolbarEnabled: true,
-              onMapCreated: (GoogleMapController controller) {
-                mapController = controller;
-                startupLogic(); // This logic ensures the map always loads before trying to move the camera, which itself has a currentPosition
-              },
-              polylines: Set<Polyline>.of(_polylines.values),
-              markers: Set.from(_markers.values),
-            ),
+          body: FutureBuilder(
+              future: loadSettings,
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  selectedTransports =
+                      SettingsPrefs.getTravelModes().map(((e) => makeTravelModeButton(e))).toList();
+                  return Stack(
+                    children: <Widget>[
+                      GoogleMap(
+                        mapType: MapType.normal,
+                        initialCameraPosition: cambridgePosition,
+                        myLocationEnabled: true,
+                        myLocationButtonEnabled: false,
+                        mapToolbarEnabled: true,
+                        onMapCreated: (GoogleMapController controller) {
+                          mapController = controller;
+                          startupLogic(); // This logic ensures the map always loads before trying to move the camera, which itself has a currentPosition
+                        },
+                        polylines: Set<Polyline>.of(_polylines.values),
+                        markers: Set.from(_markers.values),
+                      ),
 
-            //centre button
-            SafeArea(
-              child: Align(
-                alignment: FractionalOffset.bottomRight,
-                child: Padding(
-                  padding: Platform.isIOS
-                      ? const EdgeInsets.only(bottom: 10.0, right: 9.0)
-                      : const EdgeInsets.only(bottom: 105.0, right: 9.0),
-                  child: Container(
-                    width: 43,
-                    height: 43,
-                    decoration:
-                        const ShapeDecoration(color: Colors.blue, shape: CircleBorder(), shadows: [
-                      BoxShadow(offset: Offset(0, 4), color: Colors.black26, blurRadius: 4.0),
-                    ]),
-                    child: IconButton(
-                      onPressed: () => {moveCameraToCurrentLocation()},
-                      icon: const Icon(Icons.my_location),
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            //suggestions box background (only show if there is a search):
-            if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
-              Container(
-                height: height,
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
-                  backgroundBlendMode: BlendMode.darken,
-                ),
-              ),
-
-            //search area
-            WillPopScope(
-              onWillPop: () async {
-                print("onWillPop - search area");
-                // Intercepts "back" action by user and
-                // "add" an extra layer if the user is typing in the search bars
-                if (startAddressFocusNode.hasFocus | destinationAddressFocusNode.hasFocus) {
-                  FocusScope.of(context).unfocus();
-                  return false;
-                }
-                return true;
-              },
-              child: SafeArea(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 10.0),
-                    //column below is for (1) container for search bars and (2) container for prediction results
-                    child: Column(
-                      children: [
-                        Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white70,
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(20.0),
+                      //centre button
+                      SafeArea(
+                        child: Align(
+                          alignment: FractionalOffset.bottomRight,
+                          child: Padding(
+                            padding: Platform.isIOS
+                                ? const EdgeInsets.only(bottom: 10.0, right: 9.0)
+                                : const EdgeInsets.only(bottom: 105.0, right: 9.0),
+                            child: Container(
+                              width: 43,
+                              height: 43,
+                              decoration: const ShapeDecoration(
+                                  color: Colors.blue,
+                                  shape: CircleBorder(),
+                                  shadows: [
+                                    BoxShadow(
+                                        offset: Offset(0, 4),
+                                        color: Colors.black26,
+                                        blurRadius: 4.0),
+                                  ]),
+                              child: IconButton(
+                                onPressed: () => {moveCameraToCurrentLocation()},
+                                icon: const Icon(Icons.my_location),
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                          width: width * 0.9,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-                            //column below is for the two search bars + transit options
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                // const Text(
-                                //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
-                                //   style: TextStyle(fontSize: 20.0),
-                                // ),
-                                // const SizedBox(height: 10),
-                                Row(children: <Widget>[
-                                  const SizedBox(
-                                    width: 5,
-                                  ),
-                                  Column(
-                                    children: [
-                                      SizedBox(
-                                        width: 20,
-                                        child: FloatingActionButton(
-                                          foregroundColor: Colors.black,
-                                          backgroundColor: Colors.transparent,
-                                          elevation: 0,
-                                          heroTag: "backBtn",
-                                          mini: true,
-                                          onPressed: () async {
-                                            setState(() {
-                                              _polylines.clear();
-                                              _markers.clear();
-                                              Marker marker = Marker(
-                                                  markerId: const MarkerId('dest'),
-                                                  position: _destinationPosition);
-                                              _markers[marker.markerId] = marker;
-                                              print("polylines cleared");
-                                              _travelModeSet = false;
-                                            });
-                                            await moveCameraToPosition(
-                                                _destinationPosition.latitude,
-                                                _destinationPosition.longitude,
-                                                14);
-                                          },
-                                          child: const Icon(Icons.keyboard_backspace),
-                                        ),
+                        ),
+                      ),
+
+                      //suggestions box background (only show if there is a search):
+                      if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
+                        Container(
+                          height: height,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            backgroundBlendMode: BlendMode.darken,
+                          ),
+                        ),
+
+                      //search area
+                      WillPopScope(
+                        onWillPop: () async {
+                          print("onWillPop - search area");
+                          // Intercepts "back" action by user and
+                          // "add" an extra layer if the user is typing in the search bars
+                          if (startAddressFocusNode.hasFocus |
+                              destinationAddressFocusNode.hasFocus) {
+                            FocusScope.of(context).unfocus();
+                            return false;
+                          }
+                          return true;
+                        },
+                        child: SafeArea(
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 10.0),
+                              //column below is for (1) container for search bars and (2) container for prediction results
+                              child: Column(
+                                children: [
+                                  Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white70,
+                                      borderRadius: BorderRadius.all(
+                                        Radius.circular(20.0),
                                       ),
-                                      // SizedBox(
-                                      //   width: 18,
-                                      //   child: IconButton(
-                                      //     icon: const Icon(
-                                      //         Icons.keyboard_backspace),
-                                      //     onPressed: handleBackTap,
-                                      //   ),
-                                      // ),
-                                      const SizedBox(height: 60),
-                                    ],
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-                                        _textField(
-                                            label: 'Start',
-                                            hint: 'Choose starting point',
-                                            // prefixIcon: const Icon(Icons.looks_one),
-                                            suffixIcon: IconButton(
-                                              icon: const Icon(Icons.my_location),
-                                              onPressed: () async {
-                                                startAddressController.text = _currentAddress;
-                                                _startAddress = _currentAddress;
-                                                await setSelectedLocation(
-                                                    _startPlaceId, _startAddress, false);
-                                                activeAddressController = null;
-                                              },
+                                    ),
+                                    width: width * 0.9,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                                      //column below is for the two search bars + transit options
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: <Widget>[
+                                          // const Text(
+                                          //   'Places', ////Done: im not convinced we need this, it uses up a lot of real estate
+                                          //   style: TextStyle(fontSize: 20.0),
+                                          // ),
+                                          // const SizedBox(height: 10),
+                                          Row(children: <Widget>[
+                                            const SizedBox(
+                                              width: 5,
                                             ),
-                                            controller: startAddressController,
-                                            focusNode: startAddressFocusNode,
-                                            width: width,
-                                            onChanged: (String value) {
-                                              //// DONE: should probably call locationCallback something else, it does more than just deal with location
-                                              setState(() {
-                                                _startAddress = value;
-                                                ////DONE: should we be doing the above every time the user presses a new key?
-                                                searchPlaces(value);
-                                              });
-                                            }),
-                                        const SizedBox(height: 10),
-                                        _textField(
-                                            label: 'Destination',
-                                            hint: 'Choose destination',
-                                            // prefixIcon: const Icon(Icons.looks_two),
-                                            controller: destinationAddressController,
-                                            focusNode: destinationAddressFocusNode,
-                                            width: width,
-                                            onChanged: (String value) {
-                                              setState(() {
-                                                _destinationAddress = value;
-                                                searchPlaces(value);
-                                              });
-                                            }),
-                                      ],
+                                            Column(
+                                              children: [
+                                                SizedBox(
+                                                  width: 20,
+                                                  child: FloatingActionButton(
+                                                    foregroundColor: Colors.black,
+                                                    backgroundColor: Colors.transparent,
+                                                    elevation: 0,
+                                                    heroTag: "backBtn",
+                                                    mini: true,
+                                                    onPressed: () async {
+                                                      setState(() {
+                                                        _polylines.clear();
+                                                        _markers.clear();
+                                                        Marker marker = Marker(
+                                                            markerId: const MarkerId('dest'),
+                                                            position: _destinationPosition);
+                                                        _markers[marker.markerId] = marker;
+                                                        print("polylines cleared");
+                                                        _travelModeSet = false;
+                                                      });
+                                                      await moveCameraToPosition(
+                                                          _destinationPosition.latitude,
+                                                          _destinationPosition.longitude,
+                                                          14);
+                                                    },
+                                                    child: const Icon(Icons.keyboard_backspace),
+                                                  ),
+                                                ),
+                                                // SizedBox(
+                                                //   width: 18,
+                                                //   child: IconButton(
+                                                //     icon: const Icon(
+                                                //         Icons.keyboard_backspace),
+                                                //     onPressed: handleBackTap,
+                                                //   ),
+                                                // ),
+                                                const SizedBox(height: 60),
+                                              ],
+                                            ),
+                                            const SizedBox(
+                                              width: 10,
+                                            ),
+                                            Expanded(
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: <Widget>[
+                                                  _textField(
+                                                      label: 'Start',
+                                                      hint: 'Choose starting point',
+                                                      // prefixIcon: const Icon(Icons.looks_one),
+                                                      suffixIcon: IconButton(
+                                                        icon: const Icon(Icons.my_location),
+                                                        onPressed: () async {
+                                                          startAddressController.text =
+                                                              _currentAddress;
+                                                          _startAddress = _currentAddress;
+                                                          await setSelectedLocation(
+                                                              _startPlaceId, _startAddress, false);
+                                                          activeAddressController = null;
+                                                        },
+                                                      ),
+                                                      controller: startAddressController,
+                                                      focusNode: startAddressFocusNode,
+                                                      width: width,
+                                                      onChanged: (String value) {
+                                                        //// DONE: should probably call locationCallback something else, it does more than just deal with location
+                                                        setState(() {
+                                                          _startAddress = value;
+                                                          ////DONE: should we be doing the above every time the user presses a new key?
+                                                          searchPlaces(value);
+                                                        });
+                                                      }),
+                                                  const SizedBox(height: 10),
+                                                  _textField(
+                                                      label: 'Destination',
+                                                      hint: 'Choose destination',
+                                                      // prefixIcon: const Icon(Icons.looks_two),
+                                                      controller: destinationAddressController,
+                                                      focusNode: destinationAddressFocusNode,
+                                                      width: width,
+                                                      onChanged: (String value) {
+                                                        setState(() {
+                                                          _destinationAddress = value;
+                                                          searchPlaces(value);
+                                                        });
+                                                      }),
+                                                ],
+                                              ),
+                                            ),
+                                            FloatingActionButton(
+                                              heroTag: "revertBtn",
+                                              mini: true,
+                                              onPressed: () => {swapStartAndDestination()},
+                                              child: const Icon(Icons.change_circle),
+                                              ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
+                                            ),
+                                            const SizedBox(
+                                              width: 5,
+                                            ),
+                                          ]),
+
+                                          //spacer
+                                          // const SizedBox(height: 10),
+
+                                          if (_startAddress != "" &&
+                                              _destinationAddress != "" &&
+                                              !startAddressFocusNode.hasFocus &&
+                                              !destinationAddressFocusNode.hasFocus)
+                                            //row containing transit options
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                              children: selectedTransports,
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                  FloatingActionButton(
-                                    heroTag: "revertBtn",
-                                    mini: true,
-                                    onPressed: () => {swapStartAndDestination()},
-                                    child: const Icon(Icons.change_circle),
-                                    ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
-                                  ),
-                                  const SizedBox(
-                                    width: 5,
-                                  ),
-                                ]),
 
-                                //spacer
-                                // const SizedBox(height: 10),
+                                  //adds spacing between the search bars and results
+                                  const SizedBox(height: 10),
 
-                                if (_startAddress != "" &&
-                                    _destinationAddress != "" &&
-                                    !startAddressFocusNode.hasFocus &&
-                                    !destinationAddressFocusNode.hasFocus)
-                                  //row containing transit options
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                    children: selectedTransports,
+                                  //suggestions list (only show if there is a search):
+                                  if (startAddressFocusNode.hasFocus ||
+                                      destinationAddressFocusNode.hasFocus)
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      itemBuilder: ((context, index) {
+                                        return Card(
+                                          elevation: 3,
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 2, horizontal: 10),
+                                          color: Colors.black.withOpacity(0.7),
+                                          child: ListTile(
+                                            title: Text(searchResults[index].description,
+                                                style: const TextStyle(color: Colors.white)),
+                                            onTap: () async {
+                                              await setSelectedLocation(
+                                                  searchResults[index].placeId,
+                                                  searchResults[index].description,
+                                                  true);
+                                              activeAddressController = null;
+                                            },
+                                          ),
+                                        );
+                                      }),
+                                      itemCount: min(3, searchResults.length),
+                                      //TODO: do we need more than 3?
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      //centre button
+
+                      //settings button
+                      SafeArea(
+                        child: Align(
+                          alignment: FractionalOffset.bottomLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 10.0, left: 10.0),
+                            child: FloatingActionButton(
+                              heroTag: "settingsBtn",
+                              backgroundColor: Colors.grey,
+                              mini: true,
+                              onPressed: () => {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SettingsPage(
+                                      onClose: updateSelectedTransports,
+                                    ),
                                   ),
-                              ],
+                                ),
+                              },
+                              child: const Icon(Icons.settings),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      //start route button
+                      if (_polylines.isNotEmpty && canClickStart)
+                        SafeArea(
+                          child: Align(
+                            alignment: FractionalOffset.bottomCenter,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 15.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20.0),
+                                  color: Colors.blue,
+                                ),
+                                width: width / 3,
+                                height: height / 10,
+                                child: IconButton(
+                                  color: Colors.white,
+                                  iconSize: 40.0,
+                                  onPressed: () {
+                                    setState(() {
+                                      double carAverage = 175.62 * currentRouteInfo.distance;
+                                      print("car carbon: $carAverage");
+                                      double currentCarbon = currentRouteInfo.carbon + 0.0;
+                                      print("currentRoute carbon: $currentCarbon");
+                                      double tmpSaved = carAverage - currentCarbon;
+                                      print("saved: $tmpSaved");
+                                      savedCarbon += tmpSaved;
+                                      prefs.setDouble("savedCarbon", savedCarbon);
+                                      print("savedCarbon: $savedCarbon");
+                                      moveCameraToPosition(
+                                          _startPosition.latitude, _startPosition.longitude, 16);
+                                      canClickStart = false;
+                                    });
+                                    // carbonS_CarbonStatsState.carbonSaved = 0;
+                                  },
+                                  icon: const Icon(Icons.play_arrow),
+                                  //child: const Text("START"),
+                                ),
+                              ),
                             ),
                           ),
                         ),
 
-                        //adds spacing between the search bars and results
-                        const SizedBox(height: 10),
-
-                        //suggestions list (only show if there is a search):
-                        if (startAddressFocusNode.hasFocus || destinationAddressFocusNode.hasFocus)
-                          ListView.builder(
-                            shrinkWrap: true,
-                            itemBuilder: ((context, index) {
-                              return Card(
-                                elevation: 3,
-                                margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
-                                color: Colors.black.withOpacity(0.7),
-                                child: ListTile(
-                                  title: Text(searchResults[index].description,
-                                      style: const TextStyle(color: Colors.white)),
-                                  onTap: () async {
-                                    await setSelectedLocation(searchResults[index].placeId,
-                                        searchResults[index].description, true);
-                                    activeAddressController = null;
-                                  },
+                      //carbonSaved button
+                      SafeArea(
+                        child: Align(
+                          // alignment: FractionalOffset.bottomCenter,
+                          alignment: (_polylines.isNotEmpty && canClickStart)
+                              ? FractionalOffset.bottomLeft
+                              : FractionalOffset.bottomCenter,
+                          child: Padding(
+                            padding: (_polylines.isNotEmpty && canClickStart)
+                                ? const EdgeInsets.only(bottom: 60.0, left: 10.0)
+                                : const EdgeInsets.only(bottom: 10.0),
+                            child: FloatingActionButton(
+                              heroTag: "carbonSavedBtn",
+                              backgroundColor: Colors.lightGreen,
+                              mini: (_polylines.isNotEmpty && canClickStart) ? true : false,
+                              onPressed: () => {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const CarbonStats()),
                                 ),
-                              );
-                            }),
-                            itemCount: min(3, searchResults.length),
-                            //TODO: do we need more than 3?
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            //centre button
-
-            //settings button
-            SafeArea(
-              child: Align(
-                alignment: FractionalOffset.bottomLeft,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0, left: 10.0),
-                  child: FloatingActionButton(
-                    heroTag: "settingsBtn",
-                    backgroundColor: Colors.grey,
-                    mini: true,
-                    onPressed: () => {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SettingsPage(
-                            onClose: updateSelectedTransports,
+                              },
+                              child: const Icon(Icons.eco),
+                            ),
                           ),
                         ),
                       ),
-                    },
-                    child: const Icon(Icons.settings),
-                  ),
-                ),
-              ),
-            ),
-
-            //start route button
-            if (_polylines.isNotEmpty && canClickStart)
-              SafeArea(
-                child: Align(
-                  alignment: FractionalOffset.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 15.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20.0),
-                        color: Colors.blue,
-                      ),
-                      width: width / 3,
-                      height: height / 10,
-                      child: IconButton(
-                        color: Colors.white,
-                        iconSize: 40.0,
-                        onPressed: () {
-                          setState(() {
-                            double carAverage = 175.62 * currentRouteInfo.distance;
-                            print("car carbon: $carAverage");
-                            double currentCarbon = currentRouteInfo.carbon + 0.0;
-                            print("currentRoute carbon: $currentCarbon");
-                            double tmpSaved = carAverage - currentCarbon;
-                            print("saved: $tmpSaved");
-                            savedCarbon += tmpSaved;
-                            prefs.setDouble("savedCarbon", savedCarbon);
-                            print("savedCarbon: $savedCarbon");
-                            moveCameraToPosition(
-                                _startPosition.latitude, _startPosition.longitude, 16);
-                            canClickStart = false;
-                          });
-                          // carbonS_CarbonStatsState.carbonSaved = 0;
-                        },
-                        icon: const Icon(Icons.play_arrow),
-                        //child: const Text("START"),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-            //carbonSaved button
-            SafeArea(
-              child: Align(
-                // alignment: FractionalOffset.bottomCenter,
-                alignment: (_polylines.isNotEmpty && canClickStart)
-                    ? FractionalOffset.bottomLeft
-                    : FractionalOffset.bottomCenter,
-                child: Padding(
-                  padding: (_polylines.isNotEmpty && canClickStart)
-                      ? const EdgeInsets.only(bottom: 60.0, left: 10.0)
-                      : const EdgeInsets.only(bottom: 10.0),
-                  child: FloatingActionButton(
-                    heroTag: "carbonSavedBtn",
-                    backgroundColor: Colors.lightGreen,
-                    mini: (_polylines.isNotEmpty && canClickStart) ? true : false,
-                    onPressed: () => {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const CarbonStats()),
-                      ),
-                    },
-                    child: const Icon(Icons.eco),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+                    ],
+                  );
+                } else
+                  return Center(child: CircularProgressIndicator());
+              })),
     );
   }
 }

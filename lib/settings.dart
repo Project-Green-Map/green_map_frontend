@@ -31,16 +31,16 @@ class _SettingsPageState extends State<SettingsPage> {
   */
   //SettingsPrefs parentSettingsPrefs = SettingsPrefs();
 
-  late Future<void> currentVehicleFutureObtained;
+  //late Future<void> currentVehicleFutureObtained;
 
-  Future<void> getVehicleFuture() async {
+  /*Future<void> getVehicleFuture() async {
     await SettingsPrefs.onStart();
-  }
+  }*/
 
   @override
   void initState() {
     super.initState();
-    currentVehicleFutureObtained = getVehicleFuture();
+    //currentVehicleFutureObtained = getVehicleFuture();
   }
 
   @override
@@ -90,39 +90,30 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget buildDriving() {
-    return FutureBuilder(
-      future: currentVehicleFutureObtained,
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return SwitchSettingsTile(
-            leading: const Icon(Icons.directions_car_outlined),
-            settingKey: 'key-driving',
-            defaultValue: _drivingEnabled,
-            title: 'Driving',
-            onChange: (_) => {_drivingEnabled = !_drivingEnabled},
-            childrenIfEnabled: <Widget>[
-              ListTile(
-                title: const Text(
-                  'Select Vehicle',
-                  textAlign: TextAlign.center,
-                ),
-                subtitle: Text(
-                  SettingsPrefs.currentCarInUse,
-                  textAlign: TextAlign.center,
-                ),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CarSettings(),
-                  ),
-                ).then((_) => setState(() {})),
-              ),
-            ],
-          );
-        } else {
-          return const Center(child: CircularProgressIndicator());
-        }
-      },
+    return SwitchSettingsTile(
+      leading: const Icon(Icons.directions_car_outlined),
+      settingKey: 'key-driving',
+      defaultValue: _drivingEnabled,
+      title: 'Driving',
+      onChange: (_) => {_drivingEnabled = !_drivingEnabled},
+      childrenIfEnabled: <Widget>[
+        ListTile(
+          title: const Text(
+            'Select Vehicle',
+            textAlign: TextAlign.center,
+          ),
+          subtitle: Text(
+            SettingsPrefs.currentCarInUse.toString(),
+            textAlign: TextAlign.center,
+          ),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CarSettings(),
+            ),
+          ).then((_) => setState(() {})),
+        ),
+      ],
     );
   }
 
@@ -236,7 +227,10 @@ class _CarSettingsState extends State<CarSettings> {
     String data =
         await DefaultAssetBundle.of(context).loadString("lib/assets/data/frontend_data.json");
     List<dynamic> listJson = jsonDecode(data)['cars'];
-    _cars = listJson.map((element) => Car.fromJson(element)).toList();
+    inspect(listJson[1]);
+    print(Car.fromJson(jsonDecode(listJson[0])));
+    _cars = listJson.map((element) => Car.fromJson(jsonDecode(element))).toList();
+    print("finished loading lol");
   }
 
   @override
@@ -245,7 +239,6 @@ class _CarSettingsState extends State<CarSettings> {
         future: _areFuturesInitialised,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            print(SettingsPrefs.getUserCars);
             return Scaffold(
                 appBar: AppBar(
                   title: const Text('Car settings'),
@@ -267,11 +260,11 @@ class _CarSettingsState extends State<CarSettings> {
                     children: [
                       Column(
                           children: SettingsPrefs.getAllCars
-                              .map((Car c) => RadioListTile(
+                              .map((Car c) => RadioListTile<Car>(
                                   title: Text(c.toString()),
-                                  value: c.toString(),
+                                  value: c,
                                   groupValue: SettingsPrefs.currentCarInUse,
-                                  onChanged: (String? newCar) {
+                                  onChanged: (Car? newCar) {
                                     SettingsPrefs.setCurrentCar = newCar!;
                                     setState(() {});
                                   }))
@@ -404,7 +397,7 @@ class _NewCarSettingsState extends State<NewCarSettings> {
                 _selectedCarFuel != null) {
               Car newCar = Car(_selectedCarBrand!, _selectedCarModel!, _selectedCarFuel!);
               SettingsPrefs.addCar = newCar;
-              SettingsPrefs.setCurrentCar = newCar.toString();
+              SettingsPrefs.setCurrentCar = newCar;
             }
             widget.onFinish();
             Navigator.pop(context);
