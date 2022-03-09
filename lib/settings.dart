@@ -1,11 +1,9 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:map/help.dart';
 import 'package:map/services/settings_prefs.dart';
-import 'package:provider/provider.dart';
 
 import './models/car.dart';
 
@@ -227,10 +225,7 @@ class _CarSettingsState extends State<CarSettings> {
     String data =
         await DefaultAssetBundle.of(context).loadString("lib/assets/data/frontend_data.json");
     List<dynamic> listJson = jsonDecode(data)['cars'];
-    inspect(listJson[1]);
-    print(Car.fromJson(jsonDecode(listJson[0])));
-    _cars = listJson.map((element) => Car.fromJson(jsonDecode(element))).toList();
-    print("finished loading lol");
+    _cars = listJson.map((element) => Car.fromJson(element)).toList();
   }
 
   @override
@@ -244,7 +239,7 @@ class _CarSettingsState extends State<CarSettings> {
                   title: const Text('Car settings'),
                   actions: [
                     IconButton(
-                      onPressed: SettingsPrefs.getUserCars.isEmpty
+                      onPressed: SettingsPrefs.userCars.isEmpty
                           ? null
                           : () => Navigator.push(
                               context,
@@ -259,7 +254,7 @@ class _CarSettingsState extends State<CarSettings> {
                   child: ListView(
                     children: [
                       Column(
-                          children: SettingsPrefs.getAllCars
+                          children: (SettingsPrefs.userCars + SettingsPrefs.defaultCarList)
                               .map((Car c) => RadioListTile<Car>(
                                   title: Text(c.toString()),
                                   value: c,
@@ -334,7 +329,7 @@ class _NewCarSettingsState extends State<NewCarSettings> {
       ),
       content: Column(children: <Widget>[
         DropdownButtonFormField(
-          dropdownColor: Colors.blueAccent,
+          //dropdownColor: Colors.white,
           hint: const Text("Brand"),
           //value: _selectedCarBrand,
           onChanged: (String? newValue) {
@@ -361,7 +356,8 @@ class _NewCarSettingsState extends State<NewCarSettings> {
               _modelEnable = null;
             });
           },
-          dropdownColor: Colors.blueAccent,
+          //
+          //dropdownColor: Colors.blueAccent,
           items: widget.cars
               .where((car) => car.brand == _selectedCarBrand)
               .map((car) => car.model)
@@ -379,7 +375,7 @@ class _NewCarSettingsState extends State<NewCarSettings> {
               _modelEnable = newValue;
             });
           },
-          dropdownColor: Colors.blueAccent,
+          //dropdownColor: Colors.blueAccent,
           items: widget.cars
               .where((car) => car.brand == _selectedCarBrand && car.model == _selectedCarModel)
               .map((car) => car.fuel)

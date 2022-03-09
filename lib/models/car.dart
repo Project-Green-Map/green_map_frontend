@@ -1,20 +1,21 @@
 import 'dart:convert';
 
-import 'dart:developer';
-
 class Car {
   String brand = "", model = "", fuel = "", size = "";
 
   Car(this.brand, this.model, this.fuel);
   Car.fromSize(this.size);
 
+  factory Car.fromJsonCars(dynamic parsedJson) {
+    return Car(
+        parsedJson['brand'] as String, parsedJson['model'] as String, parsedJson['fuel'] as String);
+  }
+
   factory Car.fromJson(dynamic parsedJson) {
-    print('1111111111111111111111111111');
     if (!parsedJson.containsKey('size') || parsedJson['size'] == "") {
       return Car(parsedJson['brand'] as String, parsedJson['model'] as String,
           parsedJson['fuel'] as String);
     } else {
-      print("shitttttttttttttttttttttttttttttttttttttttttttttttttt");
       return Car.fromSize(parsedJson['size']);
     }
   }

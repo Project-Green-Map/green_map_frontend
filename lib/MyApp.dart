@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'dart:io' show Platform;
@@ -53,7 +54,7 @@ class MapView extends StatefulWidget {
 }
 
 class _MapViewState extends State<MapView> {
-  late SharedPreferences prefs;
+  //late SharedPreferences prefs;
   late double savedCarbon;
   // late double currentRouteCarbon;
   late RouteInfo currentRouteInfo;
@@ -111,8 +112,6 @@ class _MapViewState extends State<MapView> {
 
   Map<PolylineId, Polyline> _polylines = {};
   Map<PolylineId, RouteInfo> _routeInfo = {};
-
-  String _distanceUnits = 'km';
 
   final Map<TravelMode, String> travelModeToStringPretty = {
     //do not merge this with the one in routing_service. this is the prettified version, and
@@ -220,12 +219,12 @@ class _MapViewState extends State<MapView> {
     //called when the map is finished loading
     print("startupLogic() called");
 
-    prefs = await SharedPreferences.getInstance();
-    if (!prefs.containsKey("savedCarbon")) {
-      prefs.setDouble("savedCarbon", 0.0);
+    // prefs = await SharedPreferences.getInstance();
+    if (!SettingsPrefs.prefs.containsKey("savedCarbon")) {
+      SettingsPrefs.prefs.setDouble("savedCarbon", 0.0);
       savedCarbon = 0;
     } else {
-      savedCarbon = prefs.getDouble("savedCarbon")!;
+      savedCarbon = SettingsPrefs.prefs.getDouble("savedCarbon")!;
     }
     print("savedCarbon: $savedCarbon");
 
@@ -324,6 +323,8 @@ class _MapViewState extends State<MapView> {
       _travelMode = travelMode;
       _polylines.clear();
       _routeInfo.clear();
+      currentCarInUse = SettingsPrefs.currentCarInUse;
+      print("NEW CAR LOOOOOL " + currentCarInUse.toString());
       updateSelectedTransports();
       for (int i = 0; i < _routeNum; i++) {
         MarkerId tmpId = MarkerId("route_$i");
@@ -348,6 +349,7 @@ class _MapViewState extends State<MapView> {
   }
 
   // LatLng middlePoint;
+  late Car currentCarInUse;
 
   _createMultiplePolylines(startPlaceId, destinationPlaceId, travelMode, val) async {
     print("_createMultiplePolylines() called");
@@ -355,8 +357,8 @@ class _MapViewState extends State<MapView> {
     //var vehicleInfoSample = await rootBundle
     //    .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
     //print(vehicleInfoSample);
-
-    String vehicleInfoJSON = SettingsPrefs.getCurrentCarInUse.toJSON();
+    currentCarInUse = SettingsPrefs.currentCarInUse;
+    String vehicleInfoJSON = currentCarInUse.toJSON();
 
     Map<String, RouteInfo> encodedRoutes = await _routingService
         .getMultipleEncodedRoutesFromPlaceId(startPlaceId, destinationPlaceId, travelMode, val,
@@ -943,7 +945,7 @@ class _MapViewState extends State<MapView> {
                                       onClose: updateSelectedTransports,
                                     ),
                                   ),
-                                ),
+                                ).then((_) => setState(() {})),
                               },
                               child: const Icon(Icons.settings),
                             ),
@@ -977,7 +979,7 @@ class _MapViewState extends State<MapView> {
                                       double tmpSaved = carAverage - currentCarbon;
                                       print("saved: $tmpSaved");
                                       savedCarbon += tmpSaved;
-                                      prefs.setDouble("savedCarbon", savedCarbon);
+                                      SettingsPrefs.prefs.setDouble("savedCarbon", savedCarbon);
                                       print("savedCarbon: $savedCarbon");
                                       moveCameraToPosition(
                                           _startPosition.latitude, _startPosition.longitude, 16);

@@ -6,8 +6,8 @@ import 'MyApp.dart';
 import 'services/settings_prefs.dart';
 
 Future main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await SettingsPrefs.onStart();
+  //WidgetsFlutterBinding.ensureInitialized();
+  //await SettingsPrefs.onStart();
   await Settings.init(cacheProvider: SharePreferenceCache());
   runApp(MyApp());
 }
