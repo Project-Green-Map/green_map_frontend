@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -9,6 +10,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart'; //only use for Position objects. add functionality via geolocator_service.dart
 import 'package:map/carbonStats.dart';
+import 'package:map/models/car.dart';
 import 'package:map/models/place.dart';
 import 'package:map/models/place_search.dart';
 import 'package:map/services/places_service.dart';
@@ -33,6 +35,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Green Map',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -352,13 +355,17 @@ class _MapViewState extends State<MapView> {
   _createMultiplePolylines(startPlaceId, destinationPlaceId, travelMode, val) async {
     print("_createMultiplePolylines() called");
 
-    var vehicleInfoSample = await rootBundle
-        .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
-    print(vehicleInfoSample);
+    //var vehicleInfoSample = await rootBundle
+    //    .loadString('lib/dummy_data/vehicle_information/diesel_small_all_info.json');
+    //print(vehicleInfoSample);
+
+    Car car = settings.getCurrentCar();
+
+    String vehicleInfoJSON = car.toJSON();
 
     Map<String, RouteInfo> encodedRoutes = await _routingService
         .getMultipleEncodedRoutesFromPlaceId(startPlaceId, destinationPlaceId, travelMode, val,
-            vehicleInfo: vehicleInfoSample);
+            vehicleInfo: vehicleInfoJSON);
     // List<String> encodedRoutes =
     //     await _routingService.getMultipleEncodedRoutesFromPlaceId(
     //         startPlaceId, destinationPlaceId, travelMode, val);
@@ -666,6 +673,7 @@ class _MapViewState extends State<MapView> {
               initialCameraPosition: cambridgePosition,
               myLocationEnabled: true,
               myLocationButtonEnabled: false,
+              mapToolbarEnabled: true,
               onMapCreated: (GoogleMapController controller) {
                 mapController = controller;
                 startupLogic(); // This logic ensures the map always loads before trying to move the camera, which itself has a currentPosition
@@ -679,7 +687,9 @@ class _MapViewState extends State<MapView> {
               child: Align(
                 alignment: FractionalOffset.bottomRight,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 105.0, right: 9.0),
+                  padding: Platform.isIOS
+                      ? const EdgeInsets.only(bottom: 10.0, right: 9.0)
+                      : const EdgeInsets.only(bottom: 105.0, right: 9.0),
                   child: Container(
                     width: 43,
                     height: 43,
@@ -769,6 +779,7 @@ class _MapViewState extends State<MapView> {
                                                   position: _destinationPosition);
                                               _markers[marker.markerId] = marker;
                                               print("polylines cleared");
+                                              _travelModeSet = false;
                                             });
                                             await moveCameraToPosition(
                                                 _destinationPosition.latitude,

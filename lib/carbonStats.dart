@@ -28,10 +28,14 @@ class _CarbonStatsState extends State<CarbonStats> {
   late List<ListTile> tiles;
   late List<dynamic> recommendations;
   late SharedPreferences prefs;
+  late bool isSaving;
+  late String displayText;
 
   @override
   void initState() {
     carbonSaved = 0;
+    isSaving = true;
+    displayText = "";
     recommendations = [
       [
         "Reduce car emissions",
@@ -101,6 +105,14 @@ class _CarbonStatsState extends State<CarbonStats> {
     setState(() {
       carbonSaved = prefs.getDouble("savedCarbon")!; //TODO: actually implement
       carbonSaved /= 1000; // the cached data is stored in g CO2e
+      if(carbonSaved < 0){
+        isSaving = false;
+        carbonSaved *= -1;
+        displayText = "You could have saved ...";
+      }
+      else{
+        displayText = "You've saved ...";
+      }
       print("carbonSaved!!!!$carbonSaved");
 
       tiles = [
@@ -194,17 +206,20 @@ class _CarbonStatsState extends State<CarbonStats> {
                 child: ListView(
                   children: [
                     const SizedBox(height: 100),
-                    const Align(
+                    Align(
                       child: Text(
-                        "You've saved...",
+                        displayText,
+                        // "You've saved...",
                         style: TextStyle(fontSize: 32, fontFamily: 'Quicksand'),
                       ),
                     ),
                     Align(
                       child: Text(
                         carbonSaved.toStringAsFixed(2),
-                        style: const TextStyle(
-                            fontSize: 96, color: Colors.lightGreen, fontFamily: 'Quicksand'),
+                        style: TextStyle(
+                            fontSize: 96,
+                            color: isSaving ? Colors.lightGreen : Colors.redAccent,
+                            fontFamily: 'Quicksand'),
                       ),
                     ),
                     Stack(
@@ -212,12 +227,12 @@ class _CarbonStatsState extends State<CarbonStats> {
                         Align(
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               Text(
                                 "kilograms CO₂e!",
                                 style: TextStyle(
                                     fontSize: 32,
-                                    color: Colors.lightGreen,
+                                    color: isSaving ? Colors.lightGreen : Colors.redAccent,
                                     fontFamily: 'Quicksand',
                                     height: 0.6),
                               ),

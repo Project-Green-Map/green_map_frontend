@@ -233,7 +233,8 @@ class _CarSettingsState extends State<CarSettings> {
   }
 
   Future<void> _readJson() async {
-    String data = await DefaultAssetBundle.of(context).loadString("lib/assets/data/data2.json");
+    String data =
+        await DefaultAssetBundle.of(context).loadString("lib/assets/data/frontend_data.json");
     List<dynamic> listJson = jsonDecode(data)['cars'];
     _cars = listJson.map((element) => Car.fromJson(element)).toList();
   }
