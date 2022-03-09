@@ -11,12 +11,6 @@ class CarbonStats extends StatefulWidget {
   State<CarbonStats> createState() => _CarbonStatsState();
 }
 
-/*
-                                          !!!!!
-      NOTE: This only uses a fixed value of 12.2 (see line 30) for the carbon saved value.
-      I will add the actual tracker once we have merged the carbon calculator into the app.
-                                          !!!!!
-*/
 
 class _CarbonStatsState extends State<CarbonStats> {
   final int scrollVelocity = 10;
@@ -137,7 +131,6 @@ class _CarbonStatsState extends State<CarbonStats> {
           "Flights from LHR to JFK",
           Icons.flight_takeoff
         ],
-        //TODO: add more (the leftmost value is the emissions per kilogram)
       ]
           .map(((List<dynamic> e) => ListTile(
                 title: Text(
@@ -323,7 +316,6 @@ class _CarbonStatsState extends State<CarbonStats> {
                     Align(
                       child: SizedBox(
                         height: height / 1.7,
-                        //TODO: calculate the exact height based on how many cards are shown
                         width: width / 1.2,
                         child: ListView.builder(
                           physics: const NeverScrollableScrollPhysics(),

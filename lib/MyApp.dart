@@ -114,8 +114,6 @@ class _MapViewState extends State<MapView> {
   Map<PolylineId, RouteInfo> _routeInfo = {};
 
   final Map<TravelMode, String> travelModeToStringPretty = {
-    //do not merge this with the one in routing_service. this is the prettified version, and
-    //is not compatible with the names used in the google maps api query.
     TravelMode.driving: "Driving",
     TravelMode.walking: "Walking",
     TravelMode.bicycling: "Cycling",
@@ -260,8 +258,7 @@ class _MapViewState extends State<MapView> {
     await _geocodingService.getCurrentPlacemark(_currentPosition).then((place) {
       setState(() {
         if (place != null) {
-          //// _currentAddress = "${place.name}, ${place.locality}, ${place.postalCode}, ${place.country}";
-          ////Done: This doesn't work for street names, e.g. "17, , CB2 3NE, UK". Could we see which ones are non-null and use those?
+          // _currentAddress = "${place.name}, ${place.locality}, ${place.postalCode}, ${place.country}";
 
           bool isFirst = true;
           List<String?> placeTags = [place.name, place.locality, place.postalCode, place.country];
@@ -463,9 +460,7 @@ class _MapViewState extends State<MapView> {
     // Map<PolylineId, Marker> markersMap = {};
     for (int i = 0; i < routeInfo.length; i++) {
       PolylineId polylineId = PolylineId("route_$i");
-      //
-      // }
-      // for (PolylineId polylineId in polylineMap.keys) {
+
       int? length = polylineMap[polylineId]?.points.length;
       LatLng? middlePoint = polylineMap[polylineId]?.points[(length! / 3).floor()];
       middlePoint ??= _startPosition;
@@ -835,10 +830,8 @@ class _MapViewState extends State<MapView> {
                                                       focusNode: startAddressFocusNode,
                                                       width: width,
                                                       onChanged: (String value) {
-                                                        //// DONE: should probably call locationCallback something else, it does more than just deal with location
                                                         setState(() {
                                                           _startAddress = value;
-                                                          ////DONE: should we be doing the above every time the user presses a new key?
                                                           searchPlaces(value);
                                                         });
                                                       }),
@@ -864,7 +857,6 @@ class _MapViewState extends State<MapView> {
                                               mini: true,
                                               onPressed: () => {swapStartAndDestination()},
                                               child: const Icon(Icons.change_circle),
-                                              ////DONE: centre (UK) or center (US)? (or shall we just use an icon :P)
                                             ),
                                             const SizedBox(
                                               width: 5,
@@ -916,7 +908,6 @@ class _MapViewState extends State<MapView> {
                                         );
                                       }),
                                       itemCount: min(3, searchResults.length),
-                                      //TODO: do we need more than 3?
                                     ),
                                 ],
                               ),
