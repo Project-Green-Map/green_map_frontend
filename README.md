@@ -19,11 +19,11 @@ The Flutter frontend for the Green Maps project.
     ├── dummy_data          # "Fake" data to limit API requests made during testing
     ├── models              # Models of structures from e.g. JSONs for easy porting to Dart
     ├── services            # Direct interaction with APIs
-    ├── carbonStats.dart    # A page that displays "total saved carbon" and suggestions to save carbon emissions
-    ├── help.dart           # A page that briefly explains different parts of the app
+    ├── carbonStats.dart    # Carbon screen, displays total carbon saved and suggestions for improving footprint
+    ├── help.dart           # Code for the help screen
     ├── main.dart           # First code run by Flutter
     ├── MyApp.dart          # Code related to the main screen
-    └── settings.dart       # A page for users to make customised settings, e.g. choose car model
+    └── settings.dart       # Page for customising settings, e.g. car model
 ├── .env                    # App secrets, API keys
 ├── pubspec.yaml            # Imports and includes
 └── README.md
