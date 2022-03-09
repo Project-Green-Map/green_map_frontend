@@ -229,7 +229,7 @@ class _CarSettingsState extends State<CarSettings> {
 
   Future<void> initFutures() async {
     await _readJson();
-    await SettingsPrefs.onStart(); // ensures the following lines use the right values
+    //await SettingsPrefs.onStart(); // ensures the following lines use the right values
   }
 
   Future<void> _readJson() async {
@@ -244,31 +244,37 @@ class _CarSettingsState extends State<CarSettings> {
         future: _areFuturesInitialised,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            inspect(SettingsPrefs.getUserCars);
+            print(SettingsPrefs.getUserCars);
             return Scaffold(
                 appBar: AppBar(
                   title: const Text('Car settings'),
-                  actions: SettingsPrefs.getUserCars == []
-                      ? null
-                      : [
-                          IconButton(
-                            onPressed: () => Navigator.push(
-                                    context, MaterialPageRoute(builder: (context) => DeleteCar()))
-                                .then((_) => setState(() {})),
-                            icon: const Icon(Icons.edit),
-                          ),
-                        ],
+                  actions: [
+                    IconButton(
+                      onPressed: SettingsPrefs.getUserCars.isEmpty
+                          ? null
+                          : () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      DeleteCar(onFinish: () => setState(() {})))),
+                      icon: const Icon(Icons.edit),
+                    ),
+                  ],
                 ),
                 body: SafeArea(
                   child: ListView(
                     children: [
-                      SimpleRadioSettingsTile(
-                          title: 'Select Car',
-                          //subtitle: SettingsPrefs.currentCarInUse,
-                          settingKey: 'key-car',
-                          values: SettingsPrefs.getAllCars.map((Car c) => c.toString()).toList(),
-                          selected: SettingsPrefs.currentCarInUse,
-                          onChange: (newCar) => SettingsPrefs.setCurrentCar = newCar),
+                      Column(
+                          children: SettingsPrefs.getAllCars
+                              .map((Car c) => RadioListTile(
+                                  title: Text(c.toString()),
+                                  value: c.toString(),
+                                  groupValue: SettingsPrefs.currentCarInUse,
+                                  onChanged: (String? newCar) {
+                                    SettingsPrefs.setCurrentCar = newCar!;
+                                    setState(() {});
+                                  }))
+                              .toList()),
                       ListTile(
                         leading: const Icon(Icons.add),
                         trailing: const Icon(
@@ -281,8 +287,11 @@ class _CarSettingsState extends State<CarSettings> {
                         ),
                         onTap: () => showDialog(
                           context: context,
-                          builder: (context) => NewCarSettings(cars: _cars),
-                        ).then((_) => setState(() {})),
+                          builder: (context) => NewCarSettings(
+                            cars: _cars,
+                            onFinish: () => setState(() {}),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -296,8 +305,9 @@ class _CarSettingsState extends State<CarSettings> {
 
 class NewCarSettings extends StatefulWidget {
   final List<Car> cars;
+  final VoidCallback onFinish;
 
-  const NewCarSettings({Key? key, required this.cars}) : super(key: key);
+  const NewCarSettings({Key? key, required this.cars, required this.onFinish}) : super(key: key);
 
   @override
   _NewCarSettingsState createState() => _NewCarSettingsState();
@@ -395,6 +405,7 @@ class _NewCarSettingsState extends State<NewCarSettings> {
               SettingsPrefs.addCar = newCar;
               SettingsPrefs.setCurrentCar = newCar.toString();
             }
+            widget.onFinish();
             Navigator.pop(context);
           },
           child: const Text("Add"),
@@ -405,7 +416,8 @@ class _NewCarSettingsState extends State<NewCarSettings> {
 }
 
 class DeleteCar extends StatelessWidget {
-  DeleteCar({Key? key}) : super(key: key);
+  DeleteCar({Key? key, required this.onFinish}) : super(key: key);
+  final VoidCallback onFinish;
 
   @override
   Widget build(BuildContext context) {
@@ -423,6 +435,7 @@ class DeleteCar extends StatelessWidget {
                     color: Colors.red,
                     onPressed: () {
                       SettingsPrefs.deleteCar = SettingsPrefs.userCars[index];
+                      onFinish();
                       Navigator.pop(context);
                     }),
                 title: Text(SettingsPrefs.userCars[index].toString()));

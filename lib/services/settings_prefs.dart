@@ -68,8 +68,10 @@ class SettingsPrefs {
   }*/
 
   static set addCar(Car car) {
-    userCars.insert(0, car);
-    _prefs.setStringList('userCars', userCars.map((e) => jsonEncode(e.toJson())).toList());
+    if (!userCars.contains(car)) {
+      userCars.insert(0, car);
+      _prefs.setStringList('userCars', userCars.map((e) => jsonEncode(e.toJson())).toList());
+    }
   }
 
   static set deleteCar(Car car) {
